@@ -3,6 +3,7 @@
 用法: python validate.py        在 contract-review-cn-us/ 目录下运行
 退出码: 0 通过, 1 有硬错误。"""
 import os, re, sys
+sys.stdout.reconfigure(encoding="utf-8")
 
 ROOT = os.path.dirname(os.path.abspath(__file__))
 REF = os.path.join(ROOT, "references")
@@ -28,15 +29,13 @@ def headings(path):
 def require(cond, msg):
     if not cond: errors.append(msg)
 
-def warn(cond, msg):
-    if not cond: warnings.append(msg)
-
 # 1) SKILL.md：有 frontmatter，body ≤ 80 行
 skill = os.path.join(ROOT, "SKILL.md")
 require(os.path.exists(skill), "缺 SKILL.md")
 if os.path.exists(skill):
     require(has_frontmatter(skill), "SKILL.md 缺 YAML frontmatter")
-    require(body_lines(skill) <= 80, f"SKILL.md 正文 {body_lines(skill)} 行 > 80（违反渐进式披露）")
+    n_skill = body_lines(skill)
+    require(n_skill <= 80, f"SKILL.md 正文 {n_skill} 行 > 80（违反渐进式披露）")
 
 # 2) 框架参考文件：存在且 ≤ 260 行
 FRAMEWORK = ["00-workflow.md","01-jurisdiction-routing.md","02-methodology.md",

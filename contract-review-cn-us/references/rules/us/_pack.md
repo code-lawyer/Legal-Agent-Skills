@@ -15,6 +15,9 @@
 ## 推荐 MCP 源
 - <美国法检索 MCP，如有则填；如 Westlaw/Lexis 类或自建>。验证层据此探测；未接则回退模型知识 + `[模型知识-未验证]`。
 
+## 输出提示
+- 工作成果页眉：可用「Confidential — Attorney Work Product」（美国法 work-product / privilege 概念存在）；具体保护范围按事项与州法确认。
+
 ## 包元信息
 - 法域 slug：us
 - 维护者：<填写>　更新日期：2026-06-19

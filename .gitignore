@@ -1,0 +1,13 @@
+# 第三方参考项目（他人作品，非本仓库内容，不发布）
+awesome-legal-aiagent-skills-main/
+china-law-case-analysis-skills-main/
+claude-for-legal-ZH-main/
+legal-skills-main/
+
+# 跨项目分析报告（含对第三方项目的点评，暂不公开）
+法律AI项目全面审查报告.md
+
+# 本地工具产物
+.git/sdd/
+__pycache__/
+*.pyc

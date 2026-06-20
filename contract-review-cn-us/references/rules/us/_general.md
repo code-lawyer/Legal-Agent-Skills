@@ -15,9 +15,11 @@
 ## 四、Indemnification
 - 赔偿范围、触发条件、抗辩控制权、通知义务；first-party vs third-party claims 区分。
 - 部分州对 indemnify against one's own negligence 有明示要求（express negligence rule，如 Texas），经 MCP 核验。
+- 某些州/行业（如建筑、能源）有 anti-indemnity statute，可使特定 indemnity 条款无效（经 MCP 核验）。
 
 ## 五、Choice of Law / Forum
 - choice-of-law 与 forum selection / arbitration 是否自洽；某些州对非本州法律选择有限制；判决跨境承认执行（含中美之间）走 MCP 核验。
+- forum selection 区分 mandatory（"shall"）与 permissive（"may"），影响能否到他州另行起诉。
 
 ## 六、其他常见点
 - Warranties（明示/默示，UCC 默示适销性与适用性的 disclaimer 须 conspicuous）。

@@ -26,6 +26,7 @@ NDA、confidentiality agreement、CDA、mutual/one-way NDA、pre-deal disclosure
 - CI 定义要求 marking 但口头信息无后续书面确认机制。
 - one-way 方向与我方实际主要披露方不符。
 - 漏掉 injunctive relief / irreparable harm 条款，违约只能求金钱赔偿。
+- 被强制披露（传票/法院命令）时未及时通知披露方，使其来不及申请保护令，丧失商业秘密保护。
 
 ## 该类典型 deal-breaker
 - 过宽 residuals clause。

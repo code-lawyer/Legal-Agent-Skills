@@ -14,7 +14,7 @@ services、professional services、SaaS、subscription、cloud、MSA + order for
 ## 审查卡
 - 文件结构与优先级：MSA / SOW / Order form / DPA / 政策 incorporation by reference。
 - Auto-renewal：续约期、取消窗口、通知、调价；是否满足适用州 ARL。
-- 数据保护：DPA、subprocessors、数据所在地、删除/导出、breach 通知。
+- 数据保护：DPA、subprocessors、数据所在地、删除/导出、breach 通知；美国各州均有独立 breach notification statute，须按 governing law 所在州核验（非仅 CCPA）。
 - SLA：uptime 承诺、credits、是否 sole remedy。
 - AI/ML 七维（授权/政策隐含/匿名化/竞争污染/退出范围/输出归属/下游监管）。
 - Limitation of liability 四维。

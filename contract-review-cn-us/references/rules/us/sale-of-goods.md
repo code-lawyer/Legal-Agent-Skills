@@ -6,8 +6,8 @@ sale、purchase、supply、goods、purchase order、master supply agreement；�
 ## 法律原则要点
 > 只写原则，具体州法/UCC 变体经 MCP 核验。
 - 适用判断：货物→UCC Art.2；混合合同看 predominant purpose。
-- 风险转移（risk of loss）：按交付条款（FOB/CIF 等 Incoterms 或 UCC 默认）确定。
-- Warranties：明示担保、默示适销性(merchantability)、特定用途适用性；disclaimer 须 conspicuous（"AS IS"）。
+- 风险转移（risk of loss）：按交付条款（FOB/CIF 等 Incoterms 或 UCC 默认）确定；若合同未约定 Incoterms，UCC 默认规则（是否委托承运人、卖方是否商人）单独适用。
+- Warranties：明示担保、默示适销性(merchantability)、特定用途适用性；disclaimer 须 conspicuous（"AS IS"）；免责声明排除默示适销性须同时满足 conspicuous 且点名 merchantability，笼统"AS IS"埋在正文不算 conspicuous。
 - Remedies：UCC 下买方/卖方救济（cover、拒收、revoke acceptance）；LD 条款须非 penalty。
 - 所有权(title) 与 risk 分离处理。
 

@@ -1,6 +1,6 @@
 # 规则包：<法域名>
 
-> 复制本模板新增一个法域包：建 `rules/<slug>/` 目录，放本 `_pack.md` + `_general.md` + 若干领域卡。路由层 glob `rules/*/_pack.md` 自动发现，主流程零改动。
+> 复制本模板新增一个法域包：建 `rules/<slug>/` 目录，放本 `_pack.md` + `_general.md` + 若干领域卡。路由层会列出 `rules/` 下每个子目录、读取其中的 `_pack.md` 自动发现，主流程零改动。
 
 ## 法域识别信号
 <governing-law 条款命中模式，逐条列。如中国法："中华人民共和国法律""PRC law""Laws of the People's Republic of China"；美国法：具体州名 + "United States">

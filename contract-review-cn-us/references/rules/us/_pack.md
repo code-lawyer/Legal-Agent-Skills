@@ -1,0 +1,21 @@
+# 规则包：美国法
+
+## 法域识别信号
+- "governed by the laws of the State of <州名>"、"State of New York/Delaware/California" 等具体州 + "United States"
+- "this Agreement shall be governed by ... laws of <US state>"
+- 注意：美国合同法以州法为主，须捕获**具体州名**；仅写"US law"而无州名时标注[需确认具体州]
+
+## 业务领域登记表
+| 关键词 | 领域卡文件 |
+|---|---|
+| sale/purchase/supply/goods/购销 | sale-of-goods.md |
+| services/SaaS/subscription/cloud | services-saas.md |
+| NDA/confidentiality/CDA | nda.md |
+
+## 推荐 MCP 源
+- <美国法检索 MCP，如有则填；如 Westlaw/Lexis 类或自建>。验证层据此探测；未接则回退模型知识 + `[模型知识-未验证]`。
+
+## 包元信息
+- 法域 slug：us
+- 维护者：<填写>　更新日期：2026-06-19
+- 覆盖范围：美国州法商事合同。州法差异显著，须按具体州校验。

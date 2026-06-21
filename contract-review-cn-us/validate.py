@@ -29,6 +29,24 @@ def headings(path):
     with open(path, encoding="utf-8") as f:
         return [l.strip() for l in f if l.lstrip().startswith("#")]
 
+def section_text(path, heading_kw):
+    """返回标题含 heading_kw 的小节正文（到下一个同级或更高级标题前）。"""
+    with open(path, encoding="utf-8") as f:
+        lines = f.read().splitlines()
+    out, capture, level = [], False, 0
+    for l in lines:
+        s = l.lstrip()
+        if s.startswith("#"):
+            hl = len(s) - len(s.lstrip("#"))
+            if capture and hl <= level:
+                break
+            if heading_kw in l:
+                capture, level = True, hl
+                continue
+        if capture:
+            out.append(l)
+    return "\n".join(out)
+
 def require(cond, msg):
     if not cond: errors.append(msg)
 
@@ -62,15 +80,20 @@ if os.path.isdir(RULES):
         if os.path.exists(genmd):
             ng = body_lines(genmd)
             require(ng <= 200, f"rules/{pack}/_general.md {ng} 行 > 200（违反渐进式披露）")
-        # _pack.md 必备标题
+        # _pack.md 必备标题 + 解析业务领域登记表登记的卡文件名
+        registered = set()
         if os.path.exists(packmd):
             h = " ".join(headings(packmd))
             require("法域识别信号" in h, f"rules/{pack}/_pack.md 缺『法域识别信号』")
             require("业务领域登记表" in h, f"rules/{pack}/_pack.md 缺『业务领域登记表』")
             require("推荐" in h and "MCP" in h, f"rules/{pack}/_pack.md 缺『推荐 MCP 源』")
+            registered = set(re.findall(r"([A-Za-z0-9_\-]+\.md)",
+                                        section_text(packmd, "业务领域登记表")))
         # 领域卡（非下划线开头的 .md）：≤150 行 + 含「领域专属失败模式」+ anti-leakage 软警告
+        existing = set()
         for fn in sorted(os.listdir(pdir)):
             if not fn.endswith(".md") or fn.startswith("_"): continue
+            existing.add(fn)
             fp = os.path.join(pdir, fn)
             n = body_lines(fp)
             require(n <= 150, f"rules/{pack}/{fn} {n} 行 > 150")
@@ -81,6 +104,11 @@ if os.path.isdir(RULES):
             # anti-leakage 软警告：规则卡不应硬编码精确法条号
             if re.search(r"第[\d一二三四五六七八九十百千零]+条(?![件款])", content):
                 warnings.append(f"rules/{pack}/{fn} 出现精确法条号，确认是否应交 MCP（原则/法条分离）")
+        # 登记表 ↔ 卡文件 双向一致性
+        for fn in sorted(registered - existing):
+            errors.append(f"rules/{pack}/_pack.md 登记表指向 {fn}，但该领域卡不存在（悬空登记→运行时读取失败）")
+        for fn in sorted(existing - registered):
+            warnings.append(f"rules/{pack}/{fn} 未登记进 _pack.md 业务领域登记表（孤儿卡→路由层永不加载）")
 
 print("=== 校验结果 ===")
 for w in warnings: print("⚠️ ", w)

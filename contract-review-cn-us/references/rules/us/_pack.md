@@ -13,7 +13,9 @@
 | NDA/confidentiality/CDA | nda.md |
 
 ## 推荐 MCP 源
-- <美国法检索 MCP，如有则填；如 Westlaw/Lexis 类或自建>。验证层据此探测；未接则回退模型知识 + `[模型知识-未验证]`。
+- 商用库：Westlaw / LexisNexis / Bloomberg Law 类（判例、州法典、UCC 各州采纳）。
+- 免费/自建：Cornell LII、CourtListener、各州立法网站（state legislature）——可自建为 MCP 源。
+- 选源须按 governing law 所在**具体州**校验，州法差异显著。验证层据此探测；未接则回退模型知识 + `[模型知识-未验证]`。
 
 ## 输出提示
 - 工作成果页眉：可用「Confidential — Attorney Work Product」（美国法 work-product / privilege 概念存在）；具体保护范围按事项与州法确认。

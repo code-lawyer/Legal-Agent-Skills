@@ -9,9 +9,12 @@ REQUIRED_REFS = ["00-workflow.md","01-intake-scoping.md","02-retrieval.md",
     "03-research-mode.md","04-case-mode.md","05-output-research.md",
     "06-output-case.md","07-citation-currency.md","08-library-maintenance.md"]
 
-def _body_lines(path):
+def _read(path):
     with open(path, encoding="utf-8") as f:
-        lines = f.read().splitlines()
+        return f.read()
+
+def _body_lines(text):
+    lines = text.splitlines()
     if lines and lines[0].strip() == "---":
         try:
             lines = lines[lines.index("---", 1) + 1:]
@@ -19,9 +22,8 @@ def _body_lines(path):
             pass
     return len(lines)
 
-def _headings_text(path):
-    with open(path, encoding="utf-8") as f:
-        return " ".join(l.strip() for l in f if l.lstrip().startswith("#"))
+def _headings_text(text):
+    return " ".join(l.strip() for l in text.splitlines() if l.lstrip().startswith("#"))
 
 def check(root):
     errors, warnings = [], []
@@ -31,18 +33,18 @@ def check(root):
     skill = os.path.join(root, "SKILL.md")
     require(os.path.exists(skill), "缺 SKILL.md")
     if os.path.exists(skill):
-        with open(skill, encoding="utf-8") as f:
-            require(f.read().startswith("---"), "SKILL.md 缺 YAML frontmatter")
-        n = _body_lines(skill)
+        skill_text = _read(skill)
+        require(skill_text.startswith("---"), "SKILL.md 缺 YAML frontmatter")
+        n = _body_lines(skill_text)
         require(n <= 50, f"SKILL.md 正文 {n} 行 > 50（违反渐进式披露）")
-        h = _headings_text(skill)
+        h = _headings_text(skill_text)
         require("何时使用" in h, "SKILL.md 缺『何时使用』标题")
         require("任务边界" in h, "SKILL.md 缺『任务边界』标题")
     ref = os.path.join(root, "references")
     for name in REQUIRED_REFS:
         require(os.path.exists(os.path.join(ref, name)), f"缺 references/{name}")
-    for p in sorted(glob.glob(os.path.join(ref, "[0-9]*.md"))):
-        n = _body_lines(p)
+    for p in sorted(glob.glob(os.path.join(ref, "*.md"))):
+        n = _body_lines(_read(p))
         require(n <= 260, f"references/{os.path.basename(p)} {n} 行 > 260")
     for k in ("statutes", "cases"):
         idx = os.path.join(root, "corpus", k, "_index.md")

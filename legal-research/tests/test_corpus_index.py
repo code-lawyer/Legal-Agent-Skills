@@ -68,3 +68,16 @@ def test_check_consistency_detects_orphan_dangling_dup(tmp_path):
     assert "劳动争议/orphan.md" in res["orphans"]
     assert "劳动争议/dup.md" in res["dangling"]
     assert "A" in res["duplicates"]
+
+def test_committed_seed_row_matches_index_row():
+    """锁定列契约：种子案例的 frontmatter 经 index_row 生成的行，必须逐字出现在
+    committed 的 cases/_index.md 中。防止 index_row 列序与 _index.md 表头/行三处漂移。"""
+    base = os.path.join(os.path.dirname(__file__), "..")
+    rel = "劳动争议/(2023)京01民终12345号.md"
+    seed = os.path.join(base, "corpus", "cases", "劳动争议", "(2023)京01民终12345号.md")
+    with open(seed, encoding="utf-8") as f:
+        meta = ci.parse_frontmatter(f.read())
+    expected = ci.index_row(meta, "cases", rel)
+    with open(os.path.join(base, "corpus", "cases", "_index.md"), encoding="utf-8") as f:
+        index_md = f.read()
+    assert expected in index_md

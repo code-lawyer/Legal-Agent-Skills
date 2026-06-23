@@ -2,6 +2,7 @@
 """语料库工具：frontmatter 解析、记录校验、索引行生成、索引↔文件一致性检查。
 仅标准库。供 08 录入流水线与 validate.py 共用。"""
 import os, sys, glob
+from collections import Counter
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8")
 
@@ -40,8 +41,7 @@ def index_row(meta, kind, relpath):
     relpath = relpath.replace("\\", "/")
     if kind == "cases":
         gist = meta.get("裁判要旨", "")
-        if len(gist) > 40:
-            gist = gist[:40] + "…"
+        gist = gist[:40] + "…" if len(gist) > 40 else gist
         cells = [meta.get("案号", ""), meta.get("法院", ""), meta.get("审级", ""),
                  meta.get("案由", ""), meta.get("裁判日期", ""), gist, relpath]
     else:
@@ -65,8 +65,8 @@ def _indexed_paths(index_path):
             # 跳过表头与分隔行（分隔行单元格全是 --- 形式）
             if all(set(c) <= set("-: ") for c in cells if c):
                 continue
-            if "路径" in cells or "案号" in cells and "法院" in cells:
-                continue  # 表头
+            if cells[-1] == "路径":
+                continue  # 表头（末列恒为"路径"）
             path = cells[-1].replace("\\", "/")
             paths.append(path)
             case_numbers.append(cells[0])
@@ -83,5 +83,6 @@ def check_consistency(corpus_kind_dir, kind, index_path):
     indexed_set = set(indexed)
     orphans = sorted(files - indexed_set)
     dangling = sorted(indexed_set - files)
-    duplicates = sorted({c for c in case_numbers if case_numbers.count(c) > 1 and c}) if kind == "cases" else []
+    counts = Counter(c for c in case_numbers if c)
+    duplicates = sorted(c for c, n in counts.items() if n > 1) if kind == "cases" else []
     return {"orphans": orphans, "dangling": dangling, "duplicates": duplicates}

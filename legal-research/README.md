@@ -110,15 +110,15 @@ corpus/
 
 ---
 
-## 七、边界（与 contract-review-cn-us 的分工）
+## 七、边界（与 contract-review 的分工）
 
-| 本 skill（legal-research） | contract-review-cn-us |
+| 本 skill（legal-research） | contract-review |
 |---|---|
 | 法律研究报告（论证法律问题） | 合同审查 + 风险清单 |
 | 类案检索报告（裁判规则归纳） | 可选 Word 红线稿 |
 | 本地语料库维护 | — |
 
-**本 skill 不做**：合同审查（请使用 `contract-review-cn-us`）、合同起草、企业核验、尽调合规、续约提醒、流程图。
+**本 skill 不做**：合同审查（请使用 `contract-review`）、合同起草、企业核验、尽调合规、续约提醒、流程图。
 
 ---
 

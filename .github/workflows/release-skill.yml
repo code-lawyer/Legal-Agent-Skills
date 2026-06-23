@@ -1,12 +1,12 @@
 name: Release skill zip
 
-# 打 tag（v* 或 contract-review-cn-us-v*）即自动把 skill 打包成 zip 发到 Releases。
+# 打 tag（v* 或 contract-review-v*）即自动把 skill 打包成 zip 发到 Releases。
 # 用法：git tag v1.0.0 && git push origin v1.0.0
 on:
   push:
     tags:
       - 'v*'
-      - 'contract-review-cn-us-v*'
+      - 'contract-review-v*'
 
 permissions:
   contents: write
@@ -18,21 +18,21 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: 自检（结构校验必须通过才发布）
-        run: python3 contract-review-cn-us/validate.py
+        run: python3 contract-review/validate.py
 
       - name: 打包 zip
         run: |
-          zip -r "contract-review-cn-us-${GITHUB_REF_NAME}.zip" contract-review-cn-us \
+          zip -r "contract-review-${GITHUB_REF_NAME}.zip" contract-review \
             -x '*/__pycache__/*' '*.pyc'
 
       - name: 创建 / 更新 Release 并附 zip
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          NOTES="合同审查 Skill（中美双法域）。下载 zip → 解压得到 contract-review-cn-us/ 文件夹 → 交给文件系统类 AI agent 并指向其中的 SKILL.md。详见仓库 contract-review-cn-us/README.md。"
+          NOTES="合同审查 Skill（中美双法域）。下载 zip → 解压得到 contract-review/ 文件夹 → 交给文件系统类 AI agent 并指向其中的 SKILL.md。详见仓库 contract-review/README.md。"
           gh release create "${GITHUB_REF_NAME}" \
-            "contract-review-cn-us-${GITHUB_REF_NAME}.zip" \
-            --title "contract-review-cn-us ${GITHUB_REF_NAME}" \
+            "contract-review-${GITHUB_REF_NAME}.zip" \
+            --title "contract-review ${GITHUB_REF_NAME}" \
             --notes "${NOTES}" \
           || gh release upload "${GITHUB_REF_NAME}" \
-            "contract-review-cn-us-${GITHUB_REF_NAME}.zip" --clobber
+            "contract-review-${GITHUB_REF_NAME}.zip" --clobber

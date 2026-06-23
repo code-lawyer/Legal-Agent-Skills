@@ -4,7 +4,7 @@
 
 **Goal:** 构建 `legal-research` skill：单入口、模式路由（研究/检索/复合/库维护）+ 渐进式披露，在外接专业法律库 MCP 与本地语料库下产出执业律师级的法律研究报告与案例检索报告，并支持用户经 makeitdown 录入自维护的法条库/案例库。
 
-**Architecture:** 一个 skill 目录：薄 `SKILL.md` 做模式路由，`references/` 按需披露各阶段方法论，`corpus/` 存双视图本地语料库（目录给人看 + `_index.md` 给 agent 检索）。两个 stdlib-only Python 脚本支撑：`corpus_index.py`（frontmatter 解析 / 索引行生成 / 索引↔文件一致性检查，运行时与测试共用）与 `validate.py`（skill 结构校验，开发期门禁）。检索核验层进化自 `contract-review-cn-us/references/07-verification.md`，录入转换复用用户自有工具 makeitdown（不内嵌其代码）。
+**Architecture:** 一个 skill 目录：薄 `SKILL.md` 做模式路由，`references/` 按需披露各阶段方法论，`corpus/` 存双视图本地语料库（目录给人看 + `_index.md` 给 agent 检索）。两个 stdlib-only Python 脚本支撑：`corpus_index.py`（frontmatter 解析 / 索引行生成 / 索引↔文件一致性检查，运行时与测试共用）与 `validate.py`（skill 结构校验，开发期门禁）。检索核验层进化自 `contract-review/references/07-verification.md`，录入转换复用用户自有工具 makeitdown（不内嵌其代码）。
 
 **Tech Stack:** Markdown skill 文件（中文）；Python 3.8+ 标准库（脚本，无第三方依赖，utf-8 自足）；pytest（脚本测试）；外部工具 makeitdown（录入转换，按其 SKILL.md 调用）。
 

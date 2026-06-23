@@ -2,13 +2,13 @@
 
 > 日期：2026-06-20
 > 状态：设计已确认
-> 关联：在 `contract-review-cn-us/` 现有 skill 之上做可移植性硬化（非重构）
+> 关联：在 `contract-review/` 现有 skill 之上做可移植性硬化（非重构）
 
 ---
 
 ## 1. 目标与范围
 
-让 `contract-review-cn-us` skill 在**任意文件系统类 agent**（Claude Code / Codex / Cursor / Cline / Copilot CLI / Gemini CLI 等能读文件、能遍历目录的 agent）中都能无障碍运行，而不仅限 Claude Code。
+让 `contract-review` skill 在**任意文件系统类 agent**（Claude Code / Codex / Cursor / Cline / Copilot CLI / Gemini CLI 等能读文件、能遍历目录的 agent）中都能无障碍运行，而不仅限 Claude Code。
 
 ### 已确认决策
 

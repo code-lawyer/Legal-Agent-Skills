@@ -12,7 +12,7 @@
 
 以下为全项目硬约束，每个任务隐含包含；数值/规则逐字取自 spec。
 
-- 构建根目录：`D:\Vibe Coding Items\MagicSchool-Law\contract-review-cn-us\`
+- 构建根目录：`D:\Vibe Coding Items\MagicSchool-Law\contract-review\`
 - 渐进式披露：`SKILL.md` body ≤ 80 行；`references/` 每个框架文件 ≤ 260 行；每个领域审查卡 ≤ 150 行
 - 文件命名：references 用英文+数字前缀（`00-` `01-` …）规避中文 slug 化为空字符串
 - 原则/法条分离：`rules/` 下规则文件**只写法律原则，不写精确法条号/阈值**；具体法条交给 MCP；规则文件出现具体数字/法条时必须标注"原则如此，精确阈值与现行法条须经 MCP 核验"
@@ -23,14 +23,14 @@
 - 每个领域审查卡必须含「领域专属失败模式」小节
 - 所有面向用户的技能/参考文件正文用简体中文（美国法术语保留英文原词）
 
-**Spec 来源：** `docs/superpowers/specs/2026-06-19-contract-review-cn-us-design.md`（实现前通读一遍）
+**Spec 来源：** `docs/superpowers/specs/2026-06-19-contract-review-design.md`（实现前通读一遍）
 
 ---
 
 ## File Structure
 
 ```
-contract-review-cn-us/
+contract-review/
 ├── SKILL.md                          极薄触发器
 ├── validate.py                       结构校验器（本计划的"测试"）
 ├── README.md                         安装/使用说明
@@ -66,9 +66,9 @@ contract-review-cn-us/
 ## Task 1: 项目骨架 + 校验器
 
 **Files:**
-- Create: `contract-review-cn-us/validate.py`
-- Create: `contract-review-cn-us/.gitignore`
-- Create: 目录 `contract-review-cn-us/references/_templates/`、`contract-review-cn-us/references/rules/cn/`、`contract-review-cn-us/references/rules/us/`
+- Create: `contract-review/validate.py`
+- Create: `contract-review/.gitignore`
+- Create: 目录 `contract-review/references/_templates/`、`contract-review/references/rules/cn/`、`contract-review/references/rules/us/`
 
 **Interfaces:**
 - Produces: `python validate.py` 命令；退出码 0=通过，1=失败；按文件报告缺失/超预算/缺标题/anti-leakage 警告。后续每个任务用它当"测试"。
@@ -78,17 +78,17 @@ contract-review-cn-us/
 ```bash
 cd "D:/Vibe Coding Items/MagicSchool-Law"
 git init
-mkdir -p contract-review-cn-us/references/_templates
-mkdir -p contract-review-cn-us/references/rules/cn
-mkdir -p contract-review-cn-us/references/rules/us
+mkdir -p contract-review/references/_templates
+mkdir -p contract-review/references/rules/cn
+mkdir -p contract-review/references/rules/us
 ```
 
-- [ ] **Step 2: 写校验器 `contract-review-cn-us/validate.py`**
+- [ ] **Step 2: 写校验器 `contract-review/validate.py`**
 
 ```python
 #!/usr/bin/env python3
 """结构校验器：渐进式披露行预算 + 必备标题 + anti-leakage 软警告。
-用法: python validate.py        在 contract-review-cn-us/ 目录下运行
+用法: python validate.py        在 contract-review/ 目录下运行
 退出码: 0 通过, 1 有硬错误。"""
 import os, re, sys
 
@@ -185,14 +185,14 @@ __pycache__/
 
 - [ ] **Step 4: 运行校验器，确认它在空骨架下正确报缺失（即"失败的测试"）**
 
-Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review-cn-us" && python validate.py`
+Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review" && python validate.py`
 Expected: 退出码 1，输出含 `❌  缺 SKILL.md`、`❌  缺 references/00-workflow.md` 等。校验器本身能跑。
 
 - [ ] **Step 5: Commit**
 
 ```bash
 cd "D:/Vibe Coding Items/MagicSchool-Law"
-git add contract-review-cn-us/validate.py contract-review-cn-us/.gitignore
+git add contract-review/validate.py contract-review/.gitignore
 git commit -m "chore: scaffold contract-review skill + structural validator"
 ```
 
@@ -201,16 +201,16 @@ git commit -m "chore: scaffold contract-review skill + structural validator"
 ## Task 2: SKILL.md（极薄触发器）
 
 **Files:**
-- Create: `contract-review-cn-us/SKILL.md`
+- Create: `contract-review/SKILL.md`
 
 **Interfaces:**
 - Produces: 技能入口；声明执行顺序指向 `references/00-workflow.md`，列按需读取索引。下游所有 reference 由它路由。
 
-- [ ] **Step 1: 写 `contract-review-cn-us/SKILL.md`**
+- [ ] **Step 1: 写 `contract-review/SKILL.md`**
 
 ```markdown
 ---
-name: contract-review-cn-us
+name: contract-review
 description: 中美双法域合同审查。判定合同受中国法/美国法/跨境管辖，按法域加载规则包，逐条审查并产出双轴风险问题清单与可选 Word 红线稿。当用户要求审查/审阅/markup 合同、检查条款、看 NDA/MSA/SaaS/股权/买卖等协议时使用。
 ---
 
@@ -248,7 +248,7 @@ description: 中美双法域合同审查。判定合同受中国法/美国法/�
 
 - [ ] **Step 2: 运行校验器，确认 SKILL.md 这项已过**
 
-Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review-cn-us" && python validate.py`
+Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review" && python validate.py`
 Expected: 退出码仍为 1（其余文件还没建），但输出**不再有** `❌  缺 SKILL.md`、`❌  SKILL.md 缺 YAML frontmatter`、`❌  SKILL.md 正文 … > 80`。
 
 - [ ] **Step 3: 内容验收清单（逐项确认）**
@@ -261,7 +261,7 @@ Expected: 退出码仍为 1（其余文件还没建），但输出**不再有** 
 
 ```bash
 cd "D:/Vibe Coding Items/MagicSchool-Law"
-git add contract-review-cn-us/SKILL.md
+git add contract-review/SKILL.md
 git commit -m "feat: add thin SKILL.md trigger"
 ```
 
@@ -270,7 +270,7 @@ git commit -m "feat: add thin SKILL.md trigger"
 ## Task 3: 00-workflow.md（四阶段主流程）
 
 **Files:**
-- Create: `contract-review-cn-us/references/00-workflow.md`
+- Create: `contract-review/references/00-workflow.md`
 
 **Interfaces:**
 - Consumes: SKILL.md 的执行顺序。
@@ -314,7 +314,7 @@ git commit -m "feat: add thin SKILL.md trigger"
 
 - [ ] **Step 2: 运行校验器**
 
-Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review-cn-us" && python validate.py`
+Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review" && python validate.py`
 Expected: 输出不再有 `❌  缺 references/00-workflow.md`；该文件无超行报错。
 
 - [ ] **Step 3: 内容验收清单**
@@ -327,7 +327,7 @@ Expected: 输出不再有 `❌  缺 references/00-workflow.md`；该文件无超
 
 ```bash
 cd "D:/Vibe Coding Items/MagicSchool-Law"
-git add contract-review-cn-us/references/00-workflow.md
+git add contract-review/references/00-workflow.md
 git commit -m "feat: add four-stage workflow"
 ```
 
@@ -336,7 +336,7 @@ git commit -m "feat: add four-stage workflow"
 ## Task 4: 01-jurisdiction-routing.md（路由层）
 
 **Files:**
-- Create: `contract-review-cn-us/references/01-jurisdiction-routing.md`
+- Create: `contract-review/references/01-jurisdiction-routing.md`
 
 **Interfaces:**
 - Consumes: `rules/*/_pack.md` 的「法域识别信号」「业务领域登记表」（Task 9/10 产出）。
@@ -390,7 +390,7 @@ git commit -m "feat: add four-stage workflow"
 
 - [ ] **Step 2: 运行校验器**
 
-Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review-cn-us" && python validate.py`
+Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review" && python validate.py`
 Expected: 输出不再有 `❌  缺 references/01-jurisdiction-routing.md`；无超行报错。
 
 - [ ] **Step 3: 内容验收清单**
@@ -404,7 +404,7 @@ Expected: 输出不再有 `❌  缺 references/01-jurisdiction-routing.md`；无
 
 ```bash
 cd "D:/Vibe Coding Items/MagicSchool-Law"
-git add contract-review-cn-us/references/01-jurisdiction-routing.md
+git add contract-review/references/01-jurisdiction-routing.md
 git commit -m "feat: add jurisdiction routing layer"
 ```
 
@@ -413,7 +413,7 @@ git commit -m "feat: add jurisdiction routing layer"
 ## Task 5: 02-methodology.md（法域中立骨架）
 
 **Files:**
-- Create: `contract-review-cn-us/references/02-methodology.md`
+- Create: `contract-review/references/02-methodology.md`
 
 **Interfaces:**
 - Produces: 三观/五维度/SMART/三点一线/审查四法 + 全局失败模式清单 + 条款联动 + 大输入纪律。阶段3 加载一次；领域卡在此骨架上补法律检验点。
@@ -471,7 +471,7 @@ git commit -m "feat: add jurisdiction routing layer"
 
 - [ ] **Step 2: 运行校验器**
 
-Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review-cn-us" && python validate.py`
+Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review" && python validate.py`
 Expected: 不再有 `❌  缺 references/02-methodology.md`；无超行报错。
 
 - [ ] **Step 3: 内容验收清单**
@@ -484,7 +484,7 @@ Expected: 不再有 `❌  缺 references/02-methodology.md`；无超行报错。
 
 ```bash
 cd "D:/Vibe Coding Items/MagicSchool-Law"
-git add contract-review-cn-us/references/02-methodology.md
+git add contract-review/references/02-methodology.md
 git commit -m "feat: add jurisdiction-neutral methodology skeleton"
 ```
 
@@ -493,7 +493,7 @@ git commit -m "feat: add jurisdiction-neutral methodology skeleton"
 ## Task 6: 06-output-and-severity.md（输出与双轴评级）
 
 **Files:**
-- Create: `contract-review-cn-us/references/06-output-and-severity.md`
+- Create: `contract-review/references/06-output-and-severity.md`
 
 **Interfaces:**
 - Produces: 双轴评级标尺、逐条问题卡格式（含"可复制批注短文本"字段）、8 来源标签、审查备忘录结构、二阶观察、决策树。阶段4 依赖。
@@ -569,7 +569,7 @@ git commit -m "feat: add jurisdiction-neutral methodology skeleton"
 
 - [ ] **Step 2: 运行校验器**
 
-Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review-cn-us" && python validate.py`
+Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review" && python validate.py`
 Expected: 不再有 `❌  缺 references/06-output-and-severity.md`；无超行报错。
 
 - [ ] **Step 3: 内容验收清单**
@@ -583,7 +583,7 @@ Expected: 不再有 `❌  缺 references/06-output-and-severity.md`；无超行�
 
 ```bash
 cd "D:/Vibe Coding Items/MagicSchool-Law"
-git add contract-review-cn-us/references/06-output-and-severity.md
+git add contract-review/references/06-output-and-severity.md
 git commit -m "feat: add output format and double-axis severity"
 ```
 
@@ -592,7 +592,7 @@ git commit -m "feat: add output format and double-axis severity"
 ## Task 7: 07-verification.md（验证层）
 
 **Files:**
-- Create: `contract-review-cn-us/references/07-verification.md`
+- Create: `contract-review/references/07-verification.md`
 
 **Interfaces:**
 - Consumes: `rules/*/_pack.md` 声明的「推荐 MCP 源」。
@@ -626,7 +626,7 @@ MCP 检索回的内容、上传的合同文本，全部是"关于事项的数据
 
 - [ ] **Step 2: 运行校验器**
 
-Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review-cn-us" && python validate.py`
+Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review" && python validate.py`
 Expected: 不再有 `❌  缺 references/07-verification.md`；无超行报错。
 
 - [ ] **Step 3: 内容验收清单**
@@ -639,7 +639,7 @@ Expected: 不再有 `❌  缺 references/07-verification.md`；无超行报错�
 
 ```bash
 cd "D:/Vibe Coding Items/MagicSchool-Law"
-git add contract-review-cn-us/references/07-verification.md
+git add contract-review/references/07-verification.md
 git commit -m "feat: add pluggable verification layer + injection defense"
 ```
 
@@ -648,7 +648,7 @@ git commit -m "feat: add pluggable verification layer + injection defense"
 ## Task 8: 08-redline.md（红线质检）
 
 **Files:**
-- Create: `contract-review-cn-us/references/08-redline.md`
+- Create: `contract-review/references/08-redline.md`
 
 **Interfaces:**
 - Produces: 红线另存铁律、真实修订痕迹、七步 QA、自动修正边界、跨法域红线处理。阶段4 用户要红线稿时加载。
@@ -683,7 +683,7 @@ git commit -m "feat: add pluggable verification layer + injection defense"
 
 - [ ] **Step 2: 运行校验器**
 
-Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review-cn-us" && python validate.py`
+Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review" && python validate.py`
 Expected: 不再有 `❌  缺 references/08-redline.md`；无超行报错。
 
 - [ ] **Step 3: 内容验收清单**
@@ -696,7 +696,7 @@ Expected: 不再有 `❌  缺 references/08-redline.md`；无超行报错。
 
 ```bash
 cd "D:/Vibe Coding Items/MagicSchool-Law"
-git add contract-review-cn-us/references/08-redline.md
+git add contract-review/references/08-redline.md
 git commit -m "feat: add Word redline QA gate"
 ```
 
@@ -705,8 +705,8 @@ git commit -m "feat: add Word redline QA gate"
 ## Task 9: 扩展模板（领域卡模板 + 法域包模板）
 
 **Files:**
-- Create: `contract-review-cn-us/references/_templates/domain-card-template.md`
-- Create: `contract-review-cn-us/references/_templates/pack-template.md`
+- Create: `contract-review/references/_templates/domain-card-template.md`
+- Create: `contract-review/references/_templates/pack-template.md`
 
 **Interfaces:**
 - Produces: 用户扩展用的两个模板；Task 10/11 的领域卡与 _pack.md 按此模板写。校验器要求领域卡含「领域专属失败模式」，模板必须体现。
@@ -762,7 +762,7 @@ git commit -m "feat: add Word redline QA gate"
 
 - [ ] **Step 3: 运行校验器（确认未引入破坏；模板不受领域卡规则约束）**
 
-Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review-cn-us" && python validate.py`
+Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review" && python validate.py`
 Expected: 无新增 `❌`；`_templates/` 下文件不被当作领域卡校验。
 
 - [ ] **Step 4: 内容验收清单**
@@ -774,7 +774,7 @@ Expected: 无新增 `❌`；`_templates/` 下文件不被当作领域卡校验�
 
 ```bash
 cd "D:/Vibe Coding Items/MagicSchool-Law"
-git add contract-review-cn-us/references/_templates/
+git add contract-review/references/_templates/
 git commit -m "feat: add domain-card and pack templates for user extension"
 ```
 
@@ -783,11 +783,11 @@ git commit -m "feat: add domain-card and pack templates for user extension"
 ## Task 10: 中国法规则包（rules/cn/）
 
 **Files:**
-- Create: `contract-review-cn-us/references/rules/cn/_pack.md`
-- Create: `contract-review-cn-us/references/rules/cn/_general.md`
-- Create: `contract-review-cn-us/references/rules/cn/sale-of-goods.md`
-- Create: `contract-review-cn-us/references/rules/cn/services-saas.md`
-- Create: `contract-review-cn-us/references/rules/cn/nda.md`
+- Create: `contract-review/references/rules/cn/_pack.md`
+- Create: `contract-review/references/rules/cn/_general.md`
+- Create: `contract-review/references/rules/cn/sale-of-goods.md`
+- Create: `contract-review/references/rules/cn/services-saas.md`
+- Create: `contract-review/references/rules/cn/nda.md`
 
 **Interfaces:**
 - Consumes: Task 9 两个模板的结构；路由层与验证层。
@@ -961,7 +961,7 @@ git commit -m "feat: add domain-card and pack templates for user extension"
 
 - [ ] **Step 6: 运行校验器**
 
-Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review-cn-us" && python validate.py`
+Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review" && python validate.py`
 Expected: `rules/cn/` 无 `❌`（_pack/_general 齐、领域卡含「领域专属失败模式」、各卡 ≤150 行）。可能有 anti-leakage ⚠️ 软警告（若卡里出现"第X条"），逐条确认是否应改为原则表述。
 
 - [ ] **Step 7: 内容验收清单**
@@ -975,7 +975,7 @@ Expected: `rules/cn/` 无 `❌`（_pack/_general 齐、领域卡含「领域专�
 
 ```bash
 cd "D:/Vibe Coding Items/MagicSchool-Law"
-git add contract-review-cn-us/references/rules/cn/
+git add contract-review/references/rules/cn/
 git commit -m "feat: add China-law rule pack (_pack, _general, 3 MVP cards)"
 ```
 
@@ -984,11 +984,11 @@ git commit -m "feat: add China-law rule pack (_pack, _general, 3 MVP cards)"
 ## Task 11: 美国法规则包（rules/us/）
 
 **Files:**
-- Create: `contract-review-cn-us/references/rules/us/_pack.md`
-- Create: `contract-review-cn-us/references/rules/us/_general.md`
-- Create: `contract-review-cn-us/references/rules/us/sale-of-goods.md`
-- Create: `contract-review-cn-us/references/rules/us/services-saas.md`
-- Create: `contract-review-cn-us/references/rules/us/nda.md`
+- Create: `contract-review/references/rules/us/_pack.md`
+- Create: `contract-review/references/rules/us/_general.md`
+- Create: `contract-review/references/rules/us/sale-of-goods.md`
+- Create: `contract-review/references/rules/us/services-saas.md`
+- Create: `contract-review/references/rules/us/nda.md`
 
 **Interfaces:**
 - Consumes: Task 9 模板、Task 10 的 cn/sale-of-goods.md 格式标杆。
@@ -1159,7 +1159,7 @@ NDA、confidentiality agreement、CDA、mutual/one-way NDA、pre-deal disclosure
 
 - [ ] **Step 6: 运行校验器**
 
-Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review-cn-us" && python validate.py`
+Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review" && python validate.py`
 Expected: 全仓库**退出码 0**（✅ 通过）。`rules/us/` 无 `❌`。anti-leakage 软警告逐条复核（美国法卡引用 UCC Art.2、DTSA 等"category 级权威"是允许的 framing，非个案泄漏；确认不是具体州法条号即可）。
 
 - [ ] **Step 7: 内容验收清单**
@@ -1173,7 +1173,7 @@ Expected: 全仓库**退出码 0**（✅ 通过）。`rules/us/` 无 `❌`。ant
 
 ```bash
 cd "D:/Vibe Coding Items/MagicSchool-Law"
-git add contract-review-cn-us/references/rules/us/
+git add contract-review/references/rules/us/
 git commit -m "feat: add US-law rule pack (_pack, _general, 3 MVP cards)"
 ```
 
@@ -1182,13 +1182,13 @@ git commit -m "feat: add US-law rule pack (_pack, _general, 3 MVP cards)"
 ## Task 12: 端到端演练 + README
 
 **Files:**
-- Create: `contract-review-cn-us/README.md`
+- Create: `contract-review/README.md`
 
 **Interfaces:**
 - Consumes: 全部已建文件。
 - Produces: 安装/使用说明 + 三场演练记录（验证渐进式披露与路由真的成立）。
 
-- [ ] **Step 1: 写 `contract-review-cn-us/README.md`**
+- [ ] **Step 1: 写 `contract-review/README.md`**
 
 ```markdown
 # 合同审查 Skill（中美双法域）
@@ -1196,7 +1196,7 @@ git commit -m "feat: add US-law rule pack (_pack, _general, 3 MVP cards)"
 Claude Code 技能：判定合同受中国法/美国法/跨境管辖，按法域加载可插拔规则包，逐条审查并产出双轴风险问题清单与可选 Word 红线稿。
 
 ## 安装
-将 `contract-review-cn-us/` 放入 Claude Code 技能目录（如 `~/.claude/skills/`），或按你的插件机制注册。`SKILL.md` 为入口。
+将 `contract-review/` 放入 Claude Code 技能目录（如 `~/.claude/skills/`），或按你的插件机制注册。`SKILL.md` 为入口。
 
 ## 设计三层
 - 法域中立方法骨架（references/02）
@@ -1236,14 +1236,14 @@ Claude Code 技能：判定合同受中国法/美国法/跨境管辖，按法域
 
 - [ ] **Step 5: 全量校验通过**
 
-Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review-cn-us" && python validate.py`
+Run: `cd "D:/Vibe Coding Items/MagicSchool-Law/contract-review" && python validate.py`
 Expected: 退出码 0，`✅ 通过`，软警告均已复核。
 
 - [ ] **Step 6: Commit**
 
 ```bash
 cd "D:/Vibe Coding Items/MagicSchool-Law"
-git add contract-review-cn-us/README.md
+git add contract-review/README.md
 git commit -m "docs: add README and end-to-end dry-run verification"
 ```
 

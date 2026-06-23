@@ -2,32 +2,32 @@
 
 面向**文件系统类 AI agent**（能读文件、能遍历目录：Claude Code / Codex / Cursor / Cline / Copilot CLI / Gemini CLI 等）的技能：判定合同受中国法/美国法/跨境管辖，按法域加载可插拔规则包，逐条审查并产出双轴风险问题清单与可选 Word 红线稿。
 
-> ⚠️ **交付单元是整个 `contract-review-cn-us/` 文件夹，不是单个 `SKILL.md`。** SKILL.md 只是入口索引，正文（流程/方法/规则）在 `references/` 与 `rules/` 里，运行时由 agent 按需读取。只把 SKILL.md 一个文件交出去会导致 agent 读不到这些文件。
+> ⚠️ **交付单元是整个 `contract-review/` 文件夹，不是单个 `SKILL.md`。** SKILL.md 只是入口索引，正文（流程/方法/规则）在 `references/` 与 `rules/` 里，运行时由 agent 按需读取。只把 SKILL.md 一个文件交出去会导致 agent 读不到这些文件。
 
 ## 一、获取
 
 **方式 A（推荐，给使用者）—— 从 Releases 下载压缩包**
-到本仓库 [Releases](../../releases) 下载 `contract-review-cn-us-<版本>.zip`，解压即得到完整的 `contract-review-cn-us/` 文件夹。
+到本仓库 [Releases](../../releases) 下载 `contract-review-<版本>.zip`，解压即得到完整的 `contract-review/` 文件夹。
 
 **方式 B（给想改/想扩展的人）—— 克隆源码**
 ```
 git clone https://github.com/Tsinglaw/Legal-Agent-Skills.git
 ```
-skill 位于 `contract-review-cn-us/`。
+skill 位于 `contract-review/`。
 
 ## 二、使用
 
-解压/克隆后，把 `contract-review-cn-us/` 文件夹交给 agent，三选一：
+解压/克隆后，把 `contract-review/` 文件夹交给 agent，三选一：
 
 1. **放进 agent 的 skill 目录**（有 skill 机制的 agent，可自动触发）。
-2. **指向 SKILL.md**（任意文件系统 agent，手动唤起）：让 agent 读取并遵循 `contract-review-cn-us/SKILL.md`。
-3. **直接把 zip 丢给有 shell 的 agent**：让它先解压，再读 `contract-review-cn-us/SKILL.md`。
+2. **指向 SKILL.md**（任意文件系统 agent，手动唤起）：让 agent 读取并遵循 `contract-review/SKILL.md`。
+3. **直接把 zip 丢给有 shell 的 agent**：让它先解压，再读 `contract-review/SKILL.md`。
 
 skill 会自定位：所有内部路径都相对于 `SKILL.md` 所在目录解析，与当前工作目录无关。
 
 | Agent | 放置位置 | 唤起方式 |
 |---|---|---|
-| Claude Code | `~/.claude/skills/contract-review-cn-us/` 或按插件机制注册 | frontmatter 自动触发；或显式"用合同审查 skill" |
+| Claude Code | `~/.claude/skills/contract-review/` 或按插件机制注册 | frontmatter 自动触发；或显式"用合同审查 skill" |
 | Codex | 项目内可读路径 | 指向 SKILL.md / 按其 skill 约定 |
 | Cursor / Cline | 项目内可读路径 | @ 引用或指向 SKILL.md |
 | Copilot CLI | 项目内可读路径 | 指向 SKILL.md |

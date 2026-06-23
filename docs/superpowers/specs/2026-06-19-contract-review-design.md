@@ -49,7 +49,7 @@
 三层解耦：**法域中立方法骨架 + 法域规则包（可插拔目录）+ 路由层**。
 
 ```
-contract-review-cn-us/
+contract-review/
 ├── SKILL.md                         极薄触发器：任务边界、何时用、执行顺序、按需读取索引、输出底线
 └── references/
     ├── 00-workflow.md               主流程：四阶段（建档立场→法域路由→深度审查→交付）

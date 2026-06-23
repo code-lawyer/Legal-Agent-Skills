@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """结构校验器：渐进式披露行预算 + 必备标题 + anti-leakage 软警告。
-用法: python validate.py        在 contract-review-cn-us/ 目录下运行
+用法: python validate.py        在 contract-review/ 目录下运行
 退出码: 0 通过, 1 有硬错误。"""
 import os, re, sys, glob
 sys.stdout.reconfigure(encoding="utf-8")

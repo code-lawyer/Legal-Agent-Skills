@@ -8,6 +8,8 @@
 
 若当前环境无可用的 OOXML/docx 工具，不静默失败：明确告知用户无法生成带修订痕迹的 Word，改以问题清单的「建议修订文本」字段交付完整改后条文，由用户自行落地红线。
 
+> **可选的自带实现**：本 skill 附带一个跨 agent 通用的实现 `scripts/redline_docx.py`（纯 Python + `python-docx`，见 `scripts/requirements.txt`）。它不依赖任何特定 agent 的 docx 能力，适合"想要可复现、可跨环境生成 Word 修订稿"的场景；纯审查路径不受影响、无需安装。用法：`python scripts/redline_docx.py --input <合同.docx|.txt> --plan <修订计划.json> --output <修订稿.docx>`。它消费一份"修订计划 JSON"（由本流程的问题卡「建议修订文本」等字段生成，字段见脚本 docstring），产出真实 w:ins/w:del 修订痕迹 + 批注；**未安装 python-docx 时自动降级为 markdown 对照稿并明确告知**（契合本节"不静默失败"）。生成不需要本机安装 Word/Office（python-docx 直接写 OOXML）；查看修订稿用任意 .docx 阅读器（Word/WPS/LibreOffice 等）即可。已知 v1 限制见脚本 docstring（段落内锚点定位、改写段落不保留字符级格式）。
+
 ## 三、自动修正边界
 - 允许自动修：固定身份信息、HTML/表格格式、明显笔误。
 - 禁止自动修：事实、金额、日期、当事人、诉求、法律依据、风险结论、合同核心条款、用户尚未确认的实体选择——只能提建议交律师/用户定，绝不静默替改。

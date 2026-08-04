@@ -1,0 +1,38 @@
+[
+  {
+    "clause": "第8条 竞业限制",
+    "action": "replace",
+    "risk_level": "高",
+    "anchor_text": "乙方离职后两年内不得从事与甲方相同或类似业务",
+    "tracked_changes": "乙方离职后[-两年-][+一年+]内不得从事与甲方相同或类似业务",
+    "clean_version": "乙方离职后一年内不得从事与甲方相同或类似业务",
+    "reason": "竞业限制期限过长,超出合理范围",
+    "legal_basis": "《劳动合同法》相关规定 [待查]",
+    "negotiation_point": "可协商缩短至一年",
+    "verify_status": "pending"
+  },
+  {
+    "clause": "第12条 违约金",
+    "action": "delete",
+    "risk_level": "中",
+    "anchor_text": "乙方违反本协议的,应支付甲方违约金人民币十万元整",
+    "tracked_changes": "",
+    "clean_version": "",
+    "reason": "违约金条款与其他条款重复,建议删除",
+    "legal_basis": "[待查]",
+    "negotiation_point": "",
+    "verify_status": "pending"
+  },
+  {
+    "clause": "新增条款",
+    "action": "insert",
+    "risk_level": "中",
+    "anchor_text": "乙方违反本协议的,应支付甲方违约金人民币十万元整",
+    "tracked_changes": "",
+    "clean_version": "本协议未尽事宜,双方应友好协商解决;协商不成的,提交合同签订地有管辖权的人民法院诉讼解决。",
+    "reason": "补充争议解决条款,明确管辖",
+    "legal_basis": "[待查]",
+    "negotiation_point": "",
+    "verify_status": "pending"
+  }
+]

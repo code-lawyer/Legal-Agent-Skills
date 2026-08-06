@@ -1,67 +1,112 @@
 #!/usr/bin/env python3
-"""skill 结构校验：SKILL.md frontmatter + 行预算 + 必备标题；references 齐全 + 行预算；
-corpus 索引存在。用法: 在 legal-research/ 下 python validate.py。退出码 0 通过 / 1 硬错误。"""
-import os, sys, glob
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(encoding="utf-8")
+"""legal-research 结构校验（stdlib）。检查文件完整性、无悬空引用、必备标题、
+行预算、SKILL.md 硬不变量、corpus 残留软警告。"""
+import os
+import re
+import sys
 
-REQUIRED_REFS = ["00-workflow.md","01-intake-scoping.md","02-retrieval.md",
-    "03-research-mode.md","04-case-mode.md","05-output-research.md",
-    "06-output-case.md","07-citation-currency.md","08-library-maintenance.md"]
+REQUIRED_REFS = [
+    "00-routing-intake", "10-retrieval-core", "20-research-skeleton",
+    "21-case-skeleton", "30-analysis-guardrails", "40-output-research",
+    "41-output-case", "48-qc-gate", "49-citation-disclaimer",
+]
+LINE_BUDGET = {"SKILL.md": 130, "30-analysis-guardrails.md": 180}
+DEFAULT_REF_BUDGET = 260
+SKILL_ANCHORS = ["必须挂且仅挂一个", "终检门", "免责声明"]
+LEAKAGE = ["corpus", "本地库", "makeitdown", "corpus_index"]
+REF_PATH_RE = re.compile(r"(?:references/)?((?:\d{2})-[a-z-]+)\.md")
+
 
 def _read(path):
     with open(path, encoding="utf-8") as f:
         return f.read()
 
-def _body_lines(text):
-    lines = text.splitlines()
-    if lines and lines[0].strip() == "---":
-        try:
-            lines = lines[lines.index("---", 1) + 1:]
-        except ValueError:
-            pass
-    return len(lines)
 
-def _headings_text(text):
-    return " ".join(l.strip() for l in text.splitlines() if l.lstrip().startswith("#"))
-
-def check(root):
+def validate_skill(skill_dir):
     errors, warnings = [], []
-    def require(cond, msg):
-        if not cond:
-            errors.append(msg)
-    skill = os.path.join(root, "SKILL.md")
-    require(os.path.exists(skill), "缺 SKILL.md")
-    if os.path.exists(skill):
-        skill_text = _read(skill)
-        require(skill_text.startswith("---"), "SKILL.md 缺 YAML frontmatter")
-        n = _body_lines(skill_text)
-        require(n <= 50, f"SKILL.md 正文 {n} 行 > 50（违反渐进式披露）")
-        h = _headings_text(skill_text)
-        require("何时使用" in h, "SKILL.md 缺『何时使用』标题")
-        require("任务边界" in h, "SKILL.md 缺『任务边界』标题")
-    ref = os.path.join(root, "references")
+    refs_dir = os.path.join(skill_dir, "references")
+
+    # 1. 必备文件
+    for base in ["SKILL.md", "README.md"]:
+        if not os.path.isfile(os.path.join(skill_dir, base)):
+            errors.append(f"缺失必备文件：{base}")
+    present_refs = set()
     for name in REQUIRED_REFS:
-        require(os.path.exists(os.path.join(ref, name)), f"缺 references/{name}")
-    for p in sorted(glob.glob(os.path.join(ref, "*.md"))):
-        n = _body_lines(_read(p))
-        require(n <= 260, f"references/{os.path.basename(p)} {n} 行 > 260")
-    for k in ("statutes", "cases"):
-        idx = os.path.join(root, "corpus", k, "_index.md")
-        require(os.path.exists(idx), f"缺 corpus/{k}/_index.md")
+        p = os.path.join(refs_dir, name + ".md")
+        if os.path.isfile(p):
+            present_refs.add(name)
+        else:
+            errors.append(f"缺失必备 reference：{name}.md")
+
+    # 收集所有 md 文件
+    md_files = []
+    if os.path.isfile(os.path.join(skill_dir, "SKILL.md")):
+        md_files.append(os.path.join(skill_dir, "SKILL.md"))
+    if os.path.isfile(os.path.join(skill_dir, "README.md")):
+        md_files.append(os.path.join(skill_dir, "README.md"))
+    if os.path.isdir(refs_dir):
+        for fn in sorted(os.listdir(refs_dir)):
+            if fn.endswith(".md"):
+                md_files.append(os.path.join(refs_dir, fn))
+
+    existing_ref_stems = {
+        fn[:-3] for fn in os.listdir(refs_dir) if fn.endswith(".md")
+    } if os.path.isdir(refs_dir) else set()
+
+    for path in md_files:
+        text = _read(path)
+        base = os.path.basename(path)
+        lines = text.splitlines()
+
+        # 3. 必备 H1（仅 references）
+        if os.path.dirname(path).endswith("references"):
+            first = next((ln for ln in lines if ln.strip()), "")
+            if not first.startswith("# "):
+                errors.append(f"{base}：缺首行 H1 标题（须以 '# ' 开头）")
+
+        # 2. 悬空引用
+        for m in REF_PATH_RE.finditer(text):
+            stem = m.group(1)
+            if stem not in existing_ref_stems:
+                errors.append(f"{base}：悬空引用 {m.group(0)}（目标不存在）")
+
+        # 5. 行预算
+        budget = LINE_BUDGET.get(base, DEFAULT_REF_BUDGET if base not in ("README.md",) else None)
+        if budget is not None and len(lines) > budget:
+            errors.append(f"{base}：行数 {len(lines)} 超预算 {budget}")
+
+        # 6. corpus 残留（迁移/历史行豁免）
+        for ln in lines:
+            if ("迁移" in ln) or ("历史" in ln):
+                continue
+            for kw in LEAKAGE:
+                if kw in ln:
+                    warnings.append(f"{base}：疑似 corpus 残留「{kw}」— {ln.strip()[:40]}")
+
+    # 4. SKILL.md 硬不变量
+    skill_path = os.path.join(skill_dir, "SKILL.md")
+    if os.path.isfile(skill_path):
+        stext = _read(skill_path)
+        for anchor in SKILL_ANCHORS:
+            if anchor not in stext:
+                errors.append(f"SKILL.md：缺硬不变量锚点「{anchor}」")
+
     return errors, warnings
 
+
 def main():
-    root = os.path.dirname(os.path.abspath(__file__))
-    errors, warnings = check(root)
+    skill_dir = os.path.dirname(os.path.abspath(__file__))
+    errors, warnings = validate_skill(skill_dir)
     print("=== 校验结果 ===")
-    for w in warnings: print("⚠️ ", w)
-    for e in errors: print("❌ ", e)
-    if not errors:
-        print(f"✅ 通过（{len(warnings)} 条软警告）")
-        sys.exit(0)
-    print(f"\n失败：{len(errors)} 个硬错误")
-    sys.exit(1)
+    for w in warnings:
+        print(f"⚠️  {w}")
+    if errors:
+        for e in errors:
+            print(f"❌ {e}")
+        print(f"❌ 失败（{len(errors)} 错误 / {len(warnings)} 软警告）")
+        sys.exit(1)
+    print(f"✅ 通过（{len(warnings)} 条软警告）")
+
 
 if __name__ == "__main__":
     main()

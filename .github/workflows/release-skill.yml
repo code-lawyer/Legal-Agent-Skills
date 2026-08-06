@@ -1,12 +1,13 @@
 name: Release skill zip
 
-# 打 tag（v* 或 contract-review-v*）即自动把 skill 打包成 zip 发到 Releases。
+# 打 tag（v* / contract-review-v* / legal-research-v*）即自动校验并把 skill 打包成 zip 发到 Releases。
 # 用法：git tag v1.0.0 && git push origin v1.0.0
 on:
   push:
     tags:
       - 'v*'
       - 'contract-review-v*'
+      - 'legal-research-v*'
 
 permissions:
   contents: write
@@ -20,10 +21,18 @@ jobs:
       - name: 自检（结构校验必须通过才发布）
         run: python3 contract-review/validate.py
 
+      - name: 自检 legal-research（结构校验必须通过才发布）
+        run: python3 legal-research/validate.py
+
       - name: 打包 zip
         run: |
           zip -r "contract-review-${GITHUB_REF_NAME}.zip" contract-review \
             -x '*/__pycache__/*' '*.pyc'
+
+      - name: 打包 legal-research zip
+        run: |
+          zip -r "legal-research-${GITHUB_REF_NAME}.zip" legal-research \
+            -x '*/__pycache__/*' '*.pyc' '*/.pytest_cache/*'
 
       - name: 创建 / 更新 Release 并附 zip
         env:
@@ -36,3 +45,10 @@ jobs:
             --notes "${NOTES}" \
           || gh release upload "${GITHUB_REF_NAME}" \
             "contract-review-${GITHUB_REF_NAME}.zip" --clobber
+
+      - name: 附加 legal-research zip 到同一 Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release upload "${GITHUB_REF_NAME}" \
+            "legal-research-${GITHUB_REF_NAME}.zip" --clobber

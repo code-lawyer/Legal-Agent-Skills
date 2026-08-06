@@ -95,6 +95,10 @@ def validate_skill(skill_dir):
 
 
 def main():
+    try:
+        sys.stdout.reconfigure(encoding="utf-8")
+    except Exception:
+        pass
     skill_dir = os.path.dirname(os.path.abspath(__file__))
     errors, warnings = validate_skill(skill_dir)
     print("=== 校验结果 ===")

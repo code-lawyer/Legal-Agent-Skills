@@ -23,20 +23,14 @@ jobs:
       - name: 按 tag 前缀判定发布范围
         id: flags
         run: |
+          # 默认两个都发；专属前缀只关掉另一个
+          do_contract=true; do_legal=true
           case "$GITHUB_REF_NAME" in
-            contract-review-v*)
-              echo "do_contract=true" >> "$GITHUB_OUTPUT"
-              echo "do_legal=false" >> "$GITHUB_OUTPUT"
-              ;;
-            legal-research-v*)
-              echo "do_contract=false" >> "$GITHUB_OUTPUT"
-              echo "do_legal=true" >> "$GITHUB_OUTPUT"
-              ;;
-            *)
-              echo "do_contract=true" >> "$GITHUB_OUTPUT"
-              echo "do_legal=true" >> "$GITHUB_OUTPUT"
-              ;;
+            contract-review-v*) do_legal=false ;;
+            legal-research-v*)  do_contract=false ;;
           esac
+          echo "do_contract=$do_contract" >> "$GITHUB_OUTPUT"
+          echo "do_legal=$do_legal" >> "$GITHUB_OUTPUT"
 
       - name: 自检 contract-review（结构校验必须通过才发布）
         if: steps.flags.outputs.do_contract == 'true'
@@ -58,43 +52,26 @@ jobs:
           zip -r "legal-research-${GITHUB_REF_NAME}.zip" legal-research \
             -x '*/__pycache__/*' '*.pyc' '*/.pytest_cache/*'
 
-      - name: 创建 / 更新 Release（仅 contract-review）
-        if: steps.flags.outputs.do_contract == 'true' && steps.flags.outputs.do_legal == 'false'
+      - name: 创建 / 更新 Release（按发布范围附对应 zip）
         env:
           GH_TOKEN: ${{ github.token }}
+          DO_CONTRACT: ${{ steps.flags.outputs.do_contract }}
+          DO_LEGAL: ${{ steps.flags.outputs.do_legal }}
         run: |
-          NOTES="合同审查 Skill（中美双法域）。下载 zip → 解压得到 contract-review/ 文件夹 → 交给文件系统类 AI agent 并指向其中的 SKILL.md。详见仓库 contract-review/README.md。"
-          gh release create "${GITHUB_REF_NAME}" \
-            "contract-review-${GITHUB_REF_NAME}.zip" \
-            --title "contract-review ${GITHUB_REF_NAME}" \
-            --notes "${NOTES}" \
-          || gh release upload "${GITHUB_REF_NAME}" \
-            "contract-review-${GITHUB_REF_NAME}.zip" --clobber
+          FILES=()
+          if [ "$DO_CONTRACT" = true ]; then FILES+=("contract-review-${GITHUB_REF_NAME}.zip"); fi
+          if [ "$DO_LEGAL" = true ]; then FILES+=("legal-research-${GITHUB_REF_NAME}.zip"); fi
 
-      - name: 创建 / 更新 Release（仅 legal-research）
-        if: steps.flags.outputs.do_legal == 'true' && steps.flags.outputs.do_contract == 'false'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          NOTES="法律研究与案例检索分析 Skill。下载 zip → 解压得到 legal-research/ 文件夹 → 交给文件系统类 AI agent 并指向其中的 SKILL.md。详见仓库 legal-research/README.md。"
-          gh release create "${GITHUB_REF_NAME}" \
-            "legal-research-${GITHUB_REF_NAME}.zip" \
-            --title "legal-research ${GITHUB_REF_NAME}" \
-            --notes "${NOTES}" \
-          || gh release upload "${GITHUB_REF_NAME}" \
-            "legal-research-${GITHUB_REF_NAME}.zip" --clobber
+          if [ "$DO_CONTRACT" = true ] && [ "$DO_LEGAL" = true ]; then
+            TITLE="${GITHUB_REF_NAME}"
+            NOTES="本仓库两个 Skill 的合并发布：contract-review（合同审查，中美双法域）与 legal-research（法律研究与案例检索分析）。下载对应 zip → 解压得到 skill 文件夹 → 交给文件系统类 AI agent 并指向其中的 SKILL.md。详见各自 README.md。"
+          elif [ "$DO_CONTRACT" = true ]; then
+            TITLE="contract-review ${GITHUB_REF_NAME}"
+            NOTES="合同审查 Skill（中美双法域）。下载 zip → 解压得到 contract-review/ 文件夹 → 交给文件系统类 AI agent 并指向其中的 SKILL.md。详见仓库 contract-review/README.md。"
+          else
+            TITLE="legal-research ${GITHUB_REF_NAME}"
+            NOTES="法律研究与案例检索分析 Skill。下载 zip → 解压得到 legal-research/ 文件夹 → 交给文件系统类 AI agent 并指向其中的 SKILL.md。详见仓库 legal-research/README.md。"
+          fi
 
-      - name: 创建 / 更新 Release（两个 skill 都发布）
-        if: steps.flags.outputs.do_contract == 'true' && steps.flags.outputs.do_legal == 'true'
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          NOTES="本仓库两个 Skill 的合并发布：contract-review（合同审查，中美双法域）与 legal-research（法律研究与案例检索分析）。下载对应 zip → 解压得到 contract-review/ 或 legal-research/ 文件夹 → 交给文件系统类 AI agent 并指向其中的 SKILL.md。详见各自 README.md。"
-          gh release create "${GITHUB_REF_NAME}" \
-            "contract-review-${GITHUB_REF_NAME}.zip" \
-            "legal-research-${GITHUB_REF_NAME}.zip" \
-            --title "${GITHUB_REF_NAME}" \
-            --notes "${NOTES}" \
-          || gh release upload "${GITHUB_REF_NAME}" \
-            "contract-review-${GITHUB_REF_NAME}.zip" \
-            "legal-research-${GITHUB_REF_NAME}.zip" --clobber
+          gh release create "${GITHUB_REF_NAME}" "${FILES[@]}" --title "$TITLE" --notes "$NOTES" \
+            || gh release upload "${GITHUB_REF_NAME}" "${FILES[@]}" --clobber

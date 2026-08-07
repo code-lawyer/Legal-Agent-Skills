@@ -20,7 +20,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 按 tag 前缀判定发布范围
+      - name: 按 tag 前缀判定发布范围与 zip 命名
         id: flags
         run: |
           # 默认两个都发；专属前缀只关掉另一个
@@ -29,8 +29,21 @@ jobs:
             contract-review-v*) do_legal=false ;;
             legal-research-v*)  do_contract=false ;;
           esac
+          # zip 命名：分技能 tag（contract-review-v* / legal-research-v*）已自带技能名前缀，
+          # 直接用 tag 名，避免 contract-review-contract-review-v* 式双前缀；
+          # 合并 tag（v*）不含技能名，补上技能名前缀。两种情形都得到 <技能>-v<版本>.zip。
+          case "$GITHUB_REF_NAME" in
+            contract-review-v*) contract_zip="${GITHUB_REF_NAME}.zip" ;;
+            *)                  contract_zip="contract-review-${GITHUB_REF_NAME}.zip" ;;
+          esac
+          case "$GITHUB_REF_NAME" in
+            legal-research-v*) legal_zip="${GITHUB_REF_NAME}.zip" ;;
+            *)                 legal_zip="legal-research-${GITHUB_REF_NAME}.zip" ;;
+          esac
           echo "do_contract=$do_contract" >> "$GITHUB_OUTPUT"
           echo "do_legal=$do_legal" >> "$GITHUB_OUTPUT"
+          echo "contract_zip=$contract_zip" >> "$GITHUB_OUTPUT"
+          echo "legal_zip=$legal_zip" >> "$GITHUB_OUTPUT"
 
       - name: 自检 contract-review（结构校验必须通过才发布）
         if: steps.flags.outputs.do_contract == 'true'
@@ -43,13 +56,13 @@ jobs:
       - name: 打包 contract-review zip
         if: steps.flags.outputs.do_contract == 'true'
         run: |
-          zip -r "contract-review-${GITHUB_REF_NAME}.zip" contract-review \
+          zip -r "${{ steps.flags.outputs.contract_zip }}" contract-review \
             -x '*/__pycache__/*' '*.pyc'
 
       - name: 打包 legal-research zip
         if: steps.flags.outputs.do_legal == 'true'
         run: |
-          zip -r "legal-research-${GITHUB_REF_NAME}.zip" legal-research \
+          zip -r "${{ steps.flags.outputs.legal_zip }}" legal-research \
             -x '*/__pycache__/*' '*.pyc' '*/.pytest_cache/*'
 
       - name: 创建 / 更新 Release（按发布范围附对应 zip）
@@ -57,10 +70,12 @@ jobs:
           GH_TOKEN: ${{ github.token }}
           DO_CONTRACT: ${{ steps.flags.outputs.do_contract }}
           DO_LEGAL: ${{ steps.flags.outputs.do_legal }}
+          CONTRACT_ZIP: ${{ steps.flags.outputs.contract_zip }}
+          LEGAL_ZIP: ${{ steps.flags.outputs.legal_zip }}
         run: |
           FILES=()
-          if [ "$DO_CONTRACT" = true ]; then FILES+=("contract-review-${GITHUB_REF_NAME}.zip"); fi
-          if [ "$DO_LEGAL" = true ]; then FILES+=("legal-research-${GITHUB_REF_NAME}.zip"); fi
+          if [ "$DO_CONTRACT" = true ]; then FILES+=("$CONTRACT_ZIP"); fi
+          if [ "$DO_LEGAL" = true ]; then FILES+=("$LEGAL_ZIP"); fi
 
           if [ "$DO_CONTRACT" = true ] && [ "$DO_LEGAL" = true ]; then
             TITLE="${GITHUB_REF_NAME}"

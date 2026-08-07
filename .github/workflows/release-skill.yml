@@ -81,10 +81,11 @@ jobs:
             TITLE="${GITHUB_REF_NAME}"
             NOTES="本仓库两个 Skill 的合并发布：contract-review（合同审查，中美双法域）与 legal-research（法律研究与案例检索分析）。下载对应 zip → 解压得到 skill 文件夹 → 交给文件系统类 AI agent 并指向其中的 SKILL.md。详见各自 README.md。"
           elif [ "$DO_CONTRACT" = true ]; then
-            TITLE="contract-review ${GITHUB_REF_NAME}"
+            # 标题用中文名 + tag，避免 "contract-review contract-review-v*" 式重名
+            TITLE="合同审查（中美双法域） ${GITHUB_REF_NAME}"
             NOTES="合同审查 Skill（中美双法域）。下载 zip → 解压得到 contract-review/ 文件夹 → 交给文件系统类 AI agent 并指向其中的 SKILL.md。详见仓库 contract-review/README.md。"
           else
-            TITLE="legal-research ${GITHUB_REF_NAME}"
+            TITLE="法律研究与案例检索分析 ${GITHUB_REF_NAME}"
             NOTES="法律研究与案例检索分析 Skill。下载 zip → 解压得到 legal-research/ 文件夹 → 交给文件系统类 AI agent 并指向其中的 SKILL.md。详见仓库 legal-research/README.md。"
           fi
 

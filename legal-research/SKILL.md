@@ -38,6 +38,7 @@ description: 法律研究与案例检索分析。当用户要求做法律研究/
 
 ## 按需读取索引
 - `references/00-routing-intake.md` — 三模式路由 + 建档（问题界定 / 事实模式提取）
+- `references/09-mcp-setup.md` — （可选）MCP 接入指南：推荐元典，用户填本人 Token 即接；未接零依赖
 - `references/10-retrieval-core.md` — 检索核验底座：两级级联 + 两条标注轴 + 决策树式效力检查 + 查全查准 KPI + 三轮检索 + 注入防御
 - `references/20-research-skeleton.md` — 研究/论证骨架（问题界定→请求权→框架→解释→涵摄→司法实践→要件·举证·证据→结论→终检）
 - `references/21-case-skeleton.md` — 检索/归纳骨架（事实模式→三轮检索式→类案筛选→裁判规则→倾向统计→个案启示→终检）

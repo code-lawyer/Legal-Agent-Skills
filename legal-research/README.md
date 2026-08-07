@@ -60,6 +60,8 @@ python -m pytest tests/ -v
 
 检索核验层可插拔：运行时探测当前环境接上的专业法律库 MCP（北大法宝 / 法信 / 元典等），接上则实时核验并标 `[MCP核验:源名/案号或条号/日期]`；未接则回退模型知识并标 `[模型知识-未验证]`，高风险命题强制叠加二次核验提示。不写死任何具体 MCP 名称，以实际探测结果填入。纯分析路径**零外部依赖**。
 
+**推荐源一键接入（可选）**：`references/09-mcp-setup.md` 提供元典（chineselaw.com）的现成接入配置。到 https://open.chineselaw.com 申请**你自己的 API Token**，按该文件把 `yuandian-law` / `yuandian-case` 两个 HTTP MCP 加进宿主 agent 的 `mcpServers` 配置即可。skill 与仓库**不内置任何真实 Token**，只给占位符；Token 属你的密钥，切勿提交仓库或公开分享。
+
 ---
 
 ## 六、免责声明

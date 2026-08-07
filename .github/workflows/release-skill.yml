@@ -1,12 +1,15 @@
 name: Release skill zip
 
-# 打 tag（v* 或 contract-review-v*）即自动把 skill 打包成 zip 发到 Releases。
+# 打 tag（v* / contract-review-v* / legal-research-v*）即自动校验并把 skill 打包成 zip 发到 Releases。
+# 按 tag 前缀条件化：contract-review-v* 只发 contract-review；legal-research-v* 只发 legal-research；
+# 其他（如通用 v*）两个都校验+打包，发布同一 Release 附两个 zip。
 # 用法：git tag v1.0.0 && git push origin v1.0.0
 on:
   push:
     tags:
       - 'v*'
       - 'contract-review-v*'
+      - 'legal-research-v*'
 
 permissions:
   contents: write
@@ -17,15 +20,46 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: 自检（结构校验必须通过才发布）
+      - name: 按 tag 前缀判定发布范围
+        id: flags
+        run: |
+          case "$GITHUB_REF_NAME" in
+            contract-review-v*)
+              echo "do_contract=true" >> "$GITHUB_OUTPUT"
+              echo "do_legal=false" >> "$GITHUB_OUTPUT"
+              ;;
+            legal-research-v*)
+              echo "do_contract=false" >> "$GITHUB_OUTPUT"
+              echo "do_legal=true" >> "$GITHUB_OUTPUT"
+              ;;
+            *)
+              echo "do_contract=true" >> "$GITHUB_OUTPUT"
+              echo "do_legal=true" >> "$GITHUB_OUTPUT"
+              ;;
+          esac
+
+      - name: 自检 contract-review（结构校验必须通过才发布）
+        if: steps.flags.outputs.do_contract == 'true'
         run: python3 contract-review/validate.py
 
-      - name: 打包 zip
+      - name: 自检 legal-research（结构校验必须通过才发布）
+        if: steps.flags.outputs.do_legal == 'true'
+        run: python3 legal-research/validate.py
+
+      - name: 打包 contract-review zip
+        if: steps.flags.outputs.do_contract == 'true'
         run: |
           zip -r "contract-review-${GITHUB_REF_NAME}.zip" contract-review \
             -x '*/__pycache__/*' '*.pyc'
 
-      - name: 创建 / 更新 Release 并附 zip
+      - name: 打包 legal-research zip
+        if: steps.flags.outputs.do_legal == 'true'
+        run: |
+          zip -r "legal-research-${GITHUB_REF_NAME}.zip" legal-research \
+            -x '*/__pycache__/*' '*.pyc' '*/.pytest_cache/*'
+
+      - name: 创建 / 更新 Release（仅 contract-review）
+        if: steps.flags.outputs.do_contract == 'true' && steps.flags.outputs.do_legal == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -36,3 +70,31 @@ jobs:
             --notes "${NOTES}" \
           || gh release upload "${GITHUB_REF_NAME}" \
             "contract-review-${GITHUB_REF_NAME}.zip" --clobber
+
+      - name: 创建 / 更新 Release（仅 legal-research）
+        if: steps.flags.outputs.do_legal == 'true' && steps.flags.outputs.do_contract == 'false'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES="法律研究与案例检索分析 Skill。下载 zip → 解压得到 legal-research/ 文件夹 → 交给文件系统类 AI agent 并指向其中的 SKILL.md。详见仓库 legal-research/README.md。"
+          gh release create "${GITHUB_REF_NAME}" \
+            "legal-research-${GITHUB_REF_NAME}.zip" \
+            --title "legal-research ${GITHUB_REF_NAME}" \
+            --notes "${NOTES}" \
+          || gh release upload "${GITHUB_REF_NAME}" \
+            "legal-research-${GITHUB_REF_NAME}.zip" --clobber
+
+      - name: 创建 / 更新 Release（两个 skill 都发布）
+        if: steps.flags.outputs.do_contract == 'true' && steps.flags.outputs.do_legal == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          NOTES="本仓库两个 Skill 的合并发布：contract-review（合同审查，中美双法域）与 legal-research（法律研究与案例检索分析）。下载对应 zip → 解压得到 contract-review/ 或 legal-research/ 文件夹 → 交给文件系统类 AI agent 并指向其中的 SKILL.md。详见各自 README.md。"
+          gh release create "${GITHUB_REF_NAME}" \
+            "contract-review-${GITHUB_REF_NAME}.zip" \
+            "legal-research-${GITHUB_REF_NAME}.zip" \
+            --title "${GITHUB_REF_NAME}" \
+            --notes "${NOTES}" \
+          || gh release upload "${GITHUB_REF_NAME}" \
+            "contract-review-${GITHUB_REF_NAME}.zip" \
+            "legal-research-${GITHUB_REF_NAME}.zip" --clobber

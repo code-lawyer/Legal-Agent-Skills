@@ -1,44 +1,79 @@
-import os, sys
+import os
+import sys
+import textwrap
+import pathlib
+import pytest
+
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-import validate as V
+from validate import validate_skill  # noqa: E402
 
-REQUIRED_REFS = ["00-workflow.md","01-intake-scoping.md","02-retrieval.md",
-    "03-research-mode.md","04-case-mode.md","05-output-research.md",
-    "06-output-case.md","07-citation-currency.md","08-library-maintenance.md"]
+REFS = [
+    "00-routing-intake", "10-retrieval-core", "20-research-skeleton",
+    "21-case-skeleton", "30-analysis-guardrails", "40-output-research",
+    "41-output-case", "48-qc-gate", "49-citation-disclaimer",
+]
 
-def _make_skill(root):
-    os.makedirs(os.path.join(root, "references"))
-    os.makedirs(os.path.join(root, "corpus", "statutes"))
-    os.makedirs(os.path.join(root, "corpus", "cases"))
-    with open(os.path.join(root, "SKILL.md"), "w", encoding="utf-8") as f:
-        f.write("---\nname: legal-research\ndescription: x\n---\n# 标题\n## 何时使用\n## 任务边界\n")
-    for r in REQUIRED_REFS:
-        with open(os.path.join(root, "references", r), "w", encoding="utf-8") as f:
-            f.write("# " + r + "\n内容\n")
-    for k in ("statutes", "cases"):
-        with open(os.path.join(root, "corpus", k, "_index.md"), "w", encoding="utf-8") as f:
-            f.write("| 路径 |\n|---|\n")
 
-def test_complete_skill_has_no_errors(tmp_path):
-    _make_skill(str(tmp_path))
-    errors, _ = V.check(str(tmp_path))
+def _skeleton(tmp_path, *, skill_md=None, refs=None, guardrail_lines=10):
+    (tmp_path / "references").mkdir()
+    default_skill = textwrap.dedent(
+        """\
+        # legal-research
+        每条命题必须挂且仅挂一个来源标签。
+        报告产出前必过终检门（见 48）。
+        正式交付必附免责声明。
+        """
+    )
+    (tmp_path / "SKILL.md").write_text(skill_md or default_skill, encoding="utf-8")
+    (tmp_path / "README.md").write_text("# legal-research\n", encoding="utf-8")
+    refs = refs if refs is not None else REFS
+    for name in refs:
+        body = "# " + name + "\n"
+        if name == "30-analysis-guardrails":
+            body += "内容\n" * guardrail_lines
+        (tmp_path / "references" / (name + ".md")).write_text(body, encoding="utf-8")
+    return str(tmp_path)
+
+
+def test_complete_skill_passes(tmp_path):
+    errors, warnings = validate_skill(_skeleton(tmp_path))
     assert errors == []
 
+
 def test_missing_reference_is_error(tmp_path):
-    _make_skill(str(tmp_path))
-    os.remove(os.path.join(str(tmp_path), "references", "02-retrieval.md"))
-    errors, _ = V.check(str(tmp_path))
-    assert any("02-retrieval.md" in e for e in errors)
+    d = _skeleton(tmp_path, refs=[r for r in REFS if r != "48-qc-gate"])
+    errors, _ = validate_skill(d)
+    assert any("48-qc-gate" in e for e in errors)
 
-def test_oversized_skill_body_is_error(tmp_path):
-    _make_skill(str(tmp_path))
-    with open(os.path.join(str(tmp_path), "SKILL.md"), "a", encoding="utf-8") as f:
-        f.write("\n".join("x" for _ in range(60)))
-    errors, _ = V.check(str(tmp_path))
-    assert any("SKILL.md" in e and "50" in e for e in errors)
 
-def test_missing_corpus_index_is_error(tmp_path):
-    _make_skill(str(tmp_path))
-    os.remove(os.path.join(str(tmp_path), "corpus", "cases", "_index.md"))
-    errors, _ = V.check(str(tmp_path))
-    assert any("cases/_index.md" in e for e in errors)
+def test_dangling_reference_is_error(tmp_path):
+    skill = "# legal-research\n必须挂且仅挂一个来源标签\n终检门\n免责声明\n见 references/99-ghost.md\n"
+    errors, _ = validate_skill(_skeleton(tmp_path, skill_md=skill))
+    assert any("99-ghost" in e for e in errors)
+
+
+def test_missing_h1_is_error(tmp_path):
+    d = _skeleton(tmp_path)
+    (pathlib.Path(d) / "references" / "48-qc-gate.md").write_text("无标题\n", encoding="utf-8")
+    errors, _ = validate_skill(d)
+    assert any("48-qc-gate" in e and "标题" in e for e in errors)
+
+
+def test_skill_missing_invariant_is_error(tmp_path):
+    skill = "# legal-research\n随便写点什么\n"
+    errors, _ = validate_skill(_skeleton(tmp_path, skill_md=skill))
+    assert any("终检门" in e or "来源标签" in e or "免责" in e for e in errors)
+
+
+def test_oversized_guardrails_is_error(tmp_path):
+    errors, _ = validate_skill(_skeleton(tmp_path, guardrail_lines=200))
+    assert any("30-analysis-guardrails" in e and "行" in e for e in errors)
+
+
+def test_corpus_leakage_is_warning(tmp_path):
+    d = _skeleton(tmp_path)
+    (pathlib.Path(d) / "references" / "10-retrieval-core.md").write_text(
+        "# 10-retrieval-core\n先查本地库 corpus 命中\n", encoding="utf-8"
+    )
+    _, warnings = validate_skill(d)
+    assert any("corpus" in w or "本地库" in w for w in warnings)

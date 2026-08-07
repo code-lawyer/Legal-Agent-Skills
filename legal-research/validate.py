@@ -6,11 +6,12 @@ import re
 import sys
 
 REQUIRED_REFS = [
-    "00-routing-intake", "10-retrieval-core", "20-research-skeleton",
+    "00-routing-intake", "09-mcp-setup", "10-retrieval-core", "20-research-skeleton",
     "21-case-skeleton", "30-analysis-guardrails", "40-output-research",
     "41-output-case", "48-qc-gate", "49-citation-disclaimer",
 ]
-LINE_BUDGET = {"SKILL.md": 130, "30-analysis-guardrails.md": 180}
+# 值为 None 表示不设行预算（README.md 长度不限）。
+LINE_BUDGET = {"SKILL.md": 130, "30-analysis-guardrails.md": 180, "README.md": None}
 DEFAULT_REF_BUDGET = 260
 SKILL_ANCHORS = ["必须挂且仅挂一个", "终检门", "免责声明"]
 LEAKAGE = ["corpus", "本地库", "makeitdown", "corpus_index"]
@@ -26,36 +27,32 @@ def validate_skill(skill_dir):
     errors, warnings = [], []
     refs_dir = os.path.join(skill_dir, "references")
 
+    # references 目录清单：一次 listdir，派生 md 文件列表与 stem 集合
+    ref_md = sorted(fn for fn in os.listdir(refs_dir) if fn.endswith(".md")) \
+        if os.path.isdir(refs_dir) else []
+    existing_ref_stems = {fn[:-3] for fn in ref_md}
+
     # 1. 必备文件
     for base in ["SKILL.md", "README.md"]:
         if not os.path.isfile(os.path.join(skill_dir, base)):
             errors.append(f"缺失必备文件：{base}")
-    present_refs = set()
     for name in REQUIRED_REFS:
-        p = os.path.join(refs_dir, name + ".md")
-        if os.path.isfile(p):
-            present_refs.add(name)
-        else:
+        if name not in existing_ref_stems:
             errors.append(f"缺失必备 reference：{name}.md")
 
-    # 收集所有 md 文件
-    md_files = []
-    if os.path.isfile(os.path.join(skill_dir, "SKILL.md")):
-        md_files.append(os.path.join(skill_dir, "SKILL.md"))
-    if os.path.isfile(os.path.join(skill_dir, "README.md")):
-        md_files.append(os.path.join(skill_dir, "README.md"))
-    if os.path.isdir(refs_dir):
-        for fn in sorted(os.listdir(refs_dir)):
-            if fn.endswith(".md"):
-                md_files.append(os.path.join(refs_dir, fn))
+    # 收集所有 md 文件（SKILL / README / references）
+    md_files = [
+        os.path.join(skill_dir, b) for b in ("SKILL.md", "README.md")
+        if os.path.isfile(os.path.join(skill_dir, b))
+    ]
+    md_files += [os.path.join(refs_dir, fn) for fn in ref_md]
 
-    existing_ref_stems = {
-        fn[:-3] for fn in os.listdir(refs_dir) if fn.endswith(".md")
-    } if os.path.isdir(refs_dir) else set()
-
+    skill_text = None
     for path in md_files:
         text = _read(path)
         base = os.path.basename(path)
+        if base == "SKILL.md":
+            skill_text = text
         lines = text.splitlines()
 
         # 3. 必备 H1（仅 references）
@@ -66,12 +63,11 @@ def validate_skill(skill_dir):
 
         # 2. 悬空引用
         for m in REF_PATH_RE.finditer(text):
-            stem = m.group(1)
-            if stem not in existing_ref_stems:
+            if m.group(1) not in existing_ref_stems:
                 errors.append(f"{base}：悬空引用 {m.group(0)}（目标不存在）")
 
         # 5. 行预算
-        budget = LINE_BUDGET.get(base, DEFAULT_REF_BUDGET if base not in ("README.md",) else None)
+        budget = LINE_BUDGET.get(base, DEFAULT_REF_BUDGET)
         if budget is not None and len(lines) > budget:
             errors.append(f"{base}：行数 {len(lines)} 超预算 {budget}")
 
@@ -83,12 +79,10 @@ def validate_skill(skill_dir):
                 if kw in ln:
                     warnings.append(f"{base}：疑似 corpus 残留「{kw}」— {ln.strip()[:40]}")
 
-    # 4. SKILL.md 硬不变量
-    skill_path = os.path.join(skill_dir, "SKILL.md")
-    if os.path.isfile(skill_path):
-        stext = _read(skill_path)
+    # 4. SKILL.md 硬不变量（复用主循环已读入的文本）
+    if skill_text is not None:
         for anchor in SKILL_ANCHORS:
-            if anchor not in stext:
+            if anchor not in skill_text:
                 errors.append(f"SKILL.md：缺硬不变量锚点「{anchor}」")
 
     return errors, warnings

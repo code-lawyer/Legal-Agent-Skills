@@ -2,13 +2,12 @@ import os
 import sys
 import textwrap
 import pathlib
-import pytest
 
 sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
 from validate import validate_skill  # noqa: E402
 
 REFS = [
-    "00-routing-intake", "10-retrieval-core", "20-research-skeleton",
+    "00-routing-intake", "09-mcp-setup", "10-retrieval-core", "20-research-skeleton",
     "21-case-skeleton", "30-analysis-guardrails", "40-output-research",
     "41-output-case", "48-qc-gate", "49-citation-disclaimer",
 ]

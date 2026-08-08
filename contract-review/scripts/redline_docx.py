@@ -172,55 +172,122 @@ def _merge_keep_segments(segments):
     return merged
 
 
-def _clear_paragraph_runs(para):
-    """Remove all existing w:r children from a paragraph's XML, keeping
-    the paragraph element (and its w:pPr) intact."""
-    p = para._p
-    for r in p.findall(qn("w:r")):
-        p.remove(r)
+def _coalesce_keep_parts(parts):
+    """Collapse consecutive ("keep", text) parts into one, so plain-text
+    fragments stitched around tracked-change nodes end up as a single
+    contiguous run. ("el", element) parts (preserved or newly-built
+    w:ins/w:del) are pass-through boundaries and never merge across.
+    Drops empty keep text."""
+    merged = []
+    for kind, val in parts:
+        if kind == "keep":
+            if not val:
+                continue
+            if merged and merged[-1][0] == "keep":
+                merged[-1] = ("keep", merged[-1][1] + val)
+                continue
+        merged.append((kind, val))
+    return merged
 
 
-def _split_by_anchor(full_text, anchor_text):
-    """Split a paragraph's text around the first occurrence of anchor_text
-    into (prefix, suffix). Callers reach this only via locate_paragraph,
-    which guarantees anchor_text is present, so idx < 0 is unreachable;
-    the guard just avoids silently mangling text if that ever changes."""
-    idx = full_text.find(anchor_text) if anchor_text else -1
-    if idx < 0:
-        return "", ""
-    return full_text[:idx], full_text[idx + len(anchor_text):]
+def _run_text(r):
+    """Concatenate the visible text (w:t children) of a plain w:r run."""
+    return "".join(t.text or "" for t in r.findall(qn("w:t")))
+
+
+def _split_run_text(text, start, a_start, a_end):
+    """For a plain run occupying plain-text offsets [start, start+len(text)),
+    return (before, after): the sub-text falling before a_start and after
+    a_end respectively. Text inside [a_start, a_end) is the anchor span
+    itself and is dropped (the middle segments replace it)."""
+    end = start + len(text)
+    before = text[: min(a_start, end) - start] if start < a_start else ""
+    after = text[max(a_end, start) - start:] if end > a_end else ""
+    return before, after
 
 
 def _rewrite_paragraph_span(para, anchor_text, middle_segments, author, date, next_id):
-    """Rebuild `para` as keep(prefix) + middle_segments + keep(suffix),
-    where prefix/suffix are the paragraph text outside the anchor span
-    (preserved as plain runs; see module docstring re: rPr deferral) and
-    middle_segments is a list of (kind, text) for the anchored region.
+    """Replace the `anchor_text` span in `para` with `middle_segments`
+    (a list of (kind, text)) rendered as keep/del/ins runs, while PRESERVING
+    any pre-existing tracked-change nodes (w:ins/w:del from earlier redline
+    items applied to the same paragraph) in their original document order.
+
+    The anchor is located within the paragraph's plain-run text only — the
+    same text locate_paragraph / para.text sees — and existing w:ins/w:del
+    are treated as opaque and kept in place. This lets multiple redline
+    items touch one paragraph without an earlier change migrating to the
+    paragraph start (the failure mode of the previous whole-paragraph
+    rebuild, which orphaned prior w:ins/w:del at the front).
 
     Returns (changes_count, anchor_info). anchor_info is
     (first_run_el, last_run_el) spanning the del/ins runs actually produced
-    (for comment-range anchoring), or None if none were produced."""
-    prefix, suffix = _split_by_anchor(para.text, anchor_text)
-    _clear_paragraph_runs(para)
+    (for comment-range anchoring), or None if none were produced.
+
+    Note (v1 limitation, unchanged): prefix/suffix plain text is preserved
+    but original character-level rPr formatting is not carried over."""
     p = para._p
+    # Snapshot run-level children in order: plain runs (splittable) and
+    # existing tracked-change wrappers (preserved opaque).
+    atoms = []
+    for child in list(p):
+        if child.tag == qn("w:r"):
+            atoms.append(("keep", child))
+        elif child.tag in (qn("w:ins"), qn("w:del")):
+            atoms.append(("preserve", child))
+
+    keep_text = "".join(_run_text(el) for kind, el in atoms if kind == "keep")
+    idx = keep_text.find(anchor_text) if anchor_text else -1
+    if idx < 0:
+        # Anchor no longer locatable in plain text (e.g. it now overlaps an
+        # existing tracked change); leave the paragraph untouched.
+        return 0, None
+    a_start, a_end = idx, idx + len(anchor_text)
+
+    # Detach all run-level children (keep w:pPr and other paragraph metadata).
+    for _, el in atoms:
+        p.remove(el)
+
+    # Build an ordered list of output "parts": ("keep", text) for plain text
+    # and ("el", element) for preserved / newly-created tracked-change nodes.
+    before_parts = []
+    after_parts = []
+    kpos = 0
+    for kind, el in atoms:
+        if kind == "preserve":
+            # Bucket an existing tracked change by its position in plain text.
+            (before_parts if kpos < a_end else after_parts).append(("el", el))
+            continue
+        text = _run_text(el)
+        before, after = _split_run_text(text, kpos, a_start, a_end)
+        kpos += len(text)
+        if before:
+            before_parts.append(("keep", before))
+        if after:
+            after_parts.append(("keep", after))
+
+    # Render the middle segments into the vacated anchor position.
     changes = 0
     first_run_el = None
     last_run_el = None
-    segments = _merge_keep_segments(
-        [("keep", prefix), *middle_segments, ("keep", suffix)]
-    )
-    for kind, text in segments:
+    middle_parts = []
+    for kind, text in _merge_keep_segments(middle_segments):
         if kind == "keep":
-            p.append(_mk_keep_run(text))
+            middle_parts.append(("keep", text))
             continue
         el = _mk_del(text, author, date, next_id()) if kind == "del" \
             else _mk_ins(text, author, date, next_id())
-        p.append(el)
+        middle_parts.append(("el", el))
         changes += 1
         run_el = el.find(qn("w:r"))
         if first_run_el is None:
             first_run_el = run_el
         last_run_el = run_el
+
+    # Coalesce consecutive plain-text parts into single runs (never merging
+    # across a preserved tracked-change node), then materialize in order.
+    for kind, val in _coalesce_keep_parts([*before_parts, *middle_parts, *after_parts]):
+        p.append(_mk_keep_run(val) if kind == "keep" else val)
+
     anchor_info = (first_run_el, last_run_el) if first_run_el is not None else None
     return changes, anchor_info
 

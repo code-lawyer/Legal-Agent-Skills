@@ -1,5 +1,8 @@
 # 法律研究与案例检索 Skill Implementation Plan
 
+> 📌 **历史实施计划（已归档）。** 功能大多已实现；文中的 `- [ ]` 勾选项不再同步更新，
+> 不作为进度依据。真实进度与后续路线见根目录 [`ROADMAP.md`](../../../ROADMAP.md)。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 构建 `legal-research` skill：单入口、模式路由（研究/检索/复合/库维护）+ 渐进式披露，在外接专业法律库 MCP 与本地语料库下产出执业律师级的法律研究报告与案例检索报告，并支持用户经 makeitdown 录入自维护的法条库/案例库。

@@ -61,6 +61,54 @@ def load_plan(path):
         return json.load(f)
 
 
+_VALID_ACTIONS = ("replace", "delete", "insert", "comment")
+
+
+def _str_field(item, key):
+    """Return item[key] if it is a non-empty (after strip) string, else ''."""
+    v = item.get(key)
+    return v.strip() if isinstance(v, str) and v.strip() else ""
+
+
+def validate_plan(plan):
+    """Pre-flight-validate a redline plan's shape and per-action required
+    fields. Returns a list of human-readable error strings (empty = valid);
+    never raises. This is a schema/field gate run before rendering so a
+    malformed plan fails loudly instead of silently producing an empty or
+    partial .docx.
+
+    Required fields per action:
+      replace  -> anchor_text + (tracked_changes | clean_version)
+      delete   -> anchor_text
+      insert   -> anchor_text + clean_version
+      comment  -> anchor_text
+    """
+    if not isinstance(plan, list):
+        return [f"计划必须是 JSON 数组(list),实际为 {type(plan).__name__}"]
+
+    errors = []
+    for i, item in enumerate(plan):
+        if not isinstance(item, dict):
+            errors.append(f"[#{i}] 修订项必须是对象(dict),实际为 {type(item).__name__}")
+            continue
+        label = f"[#{i} clause={item.get('clause', '?')}]"
+        action = item.get("action")
+        if action not in _VALID_ACTIONS:
+            errors.append(
+                f"{label} action 非法或缺失: {action!r}(应为 {'/'.join(_VALID_ACTIONS)})"
+            )
+            continue
+        if not _str_field(item, "anchor_text"):
+            errors.append(f"{label} 缺少 anchor_text")
+        if action == "replace" and not (
+            _str_field(item, "tracked_changes") or _str_field(item, "clean_version")
+        ):
+            errors.append(f"{label} replace 需要 tracked_changes 或 clean_version 之一")
+        elif action == "insert" and not _str_field(item, "clean_version"):
+            errors.append(f"{label} insert 需要 clean_version")
+    return errors
+
+
 def open_or_wrap(input_path):
     """Open a .docx directly, or wrap a .txt/.md file into a new Document
     (one paragraph per line)."""
@@ -556,6 +604,21 @@ def main():
 
     parser = _build_arg_parser()
     args = parser.parse_args()
+
+    # Pre-flight schema gate: reject a malformed plan before touching any
+    # document, so a typo fails loudly instead of yielding a partial .docx.
+    try:
+        plan = load_plan(args.plan)
+    except (json.JSONDecodeError, OSError) as e:
+        print(f"error: 无法读取修订计划 {args.plan}: {e}", file=sys.stderr)
+        return 2
+    plan_errors = validate_plan(plan)
+    if plan_errors:
+        print("error: 修订计划校验未通过:", file=sys.stderr)
+        for msg in plan_errors:
+            print(f"  - {msg}", file=sys.stderr)
+        return 2
+
     result = apply_redline(args.input, args.plan, args.output, author=args.author)
 
     for warning in result.get("warnings", []):

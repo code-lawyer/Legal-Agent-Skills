@@ -1,4 +1,5 @@
 import json
+import sys
 import zipfile
 from docx import Document
 from docx.oxml.ns import qn
@@ -134,6 +135,60 @@ def test_two_replaces_same_paragraph_preserve_order(tmp_path):
     assert _accepted_text(str(out)) == "A ONE B TWO C"
     # Reject-all view reconstructs the untouched original.
     assert _rejected_text(str(out)) == "A one B two C"
+
+
+def test_validate_plan_accepts_one_of_each_action():
+    plan = [
+        {"clause": "1", "action": "replace", "anchor_text": "x", "clean_version": "y"},
+        {"clause": "2", "action": "delete", "anchor_text": "x"},
+        {"clause": "3", "action": "insert", "anchor_text": "x", "clean_version": "y"},
+        {"clause": "4", "action": "comment", "anchor_text": "x"},
+    ]
+    assert redline_docx.validate_plan(plan) == []
+
+
+def test_validate_plan_rejects_non_list():
+    assert len(redline_docx.validate_plan({"action": "replace"})) == 1
+
+
+def test_validate_plan_rejects_non_dict_item():
+    errs = redline_docx.validate_plan([42])
+    assert len(errs) == 1 and "#0" in errs[0]
+
+
+def test_validate_plan_rejects_unknown_action():
+    errs = redline_docx.validate_plan([{"action": "frobnicate", "anchor_text": "x"}])
+    assert errs and "action" in errs[0]
+
+
+def test_validate_plan_requires_anchor_text():
+    errs = redline_docx.validate_plan([{"action": "replace", "clean_version": "y"}])
+    assert any("anchor_text" in e for e in errs)
+
+
+def test_validate_plan_replace_requires_change_text():
+    errs = redline_docx.validate_plan([{"action": "replace", "anchor_text": "x"}])
+    assert any("tracked_changes" in e or "clean_version" in e for e in errs)
+
+
+def test_validate_plan_insert_requires_clean_version():
+    errs = redline_docx.validate_plan([{"action": "insert", "anchor_text": "x"}])
+    assert any("clean_version" in e for e in errs)
+
+
+def test_main_rejects_invalid_plan_before_writing(tmp_path, monkeypatch, capsys):
+    inp = tmp_path / "in.docx"
+    d = Document(); d.add_paragraph("X"); d.save(str(inp))
+    plan = tmp_path / "bad.json"
+    plan.write_text('[{"action":"replace"}]', encoding="utf-8")  # no anchor, no change text
+    out = tmp_path / "out.docx"
+    monkeypatch.setattr(sys, "argv", [
+        "redline_docx.py", "--input", str(inp), "--plan", str(plan), "--output", str(out),
+    ])
+    rc = redline_docx.main()
+    assert rc == 2
+    assert not out.exists()  # gate fails before any document is written
+    assert "anchor_text" in capsys.readouterr().err
 
 
 def test_degrade_to_markdown(tmp_path, monkeypatch):

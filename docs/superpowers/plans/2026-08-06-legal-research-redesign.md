@@ -1,5 +1,8 @@
 # legal-research 重新设计 Implementation Plan
 
+> 📌 **历史实施计划（已归档）。** 功能大多已实现；文中的 `- [ ]` 勾选项不再同步更新，
+> 不作为进度依据。真实进度与后续路线见根目录 [`ROADMAP.md`](../../../ROADMAP.md)。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 从零重建 `legal-research` skill —— 单 skill、三模式、无 corpus、检索核验脊梁重投入、分析层单文件薄护栏、终检门 QC 兜底。

@@ -71,17 +71,25 @@ skill 会自定位：所有内部路径都相对 `SKILL.md` 所在目录解析�
 
 ## 四、开发与校验
 
-要求 **Python 3.8+**。校验脚本仅用标准库；红线脚本的测试需要 `python-docx`。
+要求 **Python 3.8+**。校验脚本仅用标准库；测试需 `python-docx` + `pytest`——
+`pip install -r requirements-dev.txt` 一次装齐。每次 push / PR 由 CI
+（`.github/workflows/ci.yml`）自动跑下列全部，作为合并前门禁。
 
 ```bash
+pip install -r requirements-dev.txt
+
 # 校验 skill 结构完整性（每次修改 references/ 或 rules/ 后运行）
 python contract-review/validate.py         # 预期：✅ 通过
 cd legal-research && python validate.py     # 预期：✅ 通过
 
 # 单元测试
-python -m pytest contract-review/scripts/test_redline_docx.py   # 需 python-docx
+python -m pytest contract-review/scripts/test_redline_docx.py   # 红线渲染 + 计划校验
 python -m pytest legal-research/tests/                          # 纯标准库
 ```
+
+进度看板见 [`ROADMAP.md`](ROADMAP.md)；变更见 [`CHANGELOG.md`](CHANGELOG.md)；
+贡献流程见 [`CONTRIBUTING.md`](CONTRIBUTING.md)；安全与 Token 处理见
+[`SECURITY.md`](SECURITY.md)。许可证 [MIT](LICENSE)。
 
 ### 扩展 contract-review
 

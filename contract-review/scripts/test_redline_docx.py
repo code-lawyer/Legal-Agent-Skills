@@ -1,6 +1,34 @@
+import json
 import zipfile
 from docx import Document
+from docx.oxml.ns import qn
 import redline_docx
+
+
+def _accepted_text(docx_path, para_index=0):
+    """Reconstruct the paragraph text as if every tracked change were
+    ACCEPTED: plain runs + w:ins text, in document order, w:del dropped."""
+    p = Document(docx_path).paragraphs[para_index]._p
+    out = []
+    for child in p:
+        tag = child.tag.split("}")[-1]
+        if tag in ("r", "ins"):
+            out.append("".join(t.text or "" for t in child.iter(qn("w:t"))))
+    return "".join(out)
+
+
+def _rejected_text(docx_path, para_index=0):
+    """Reconstruct the paragraph text as if every tracked change were
+    REJECTED: plain runs + w:del text, in document order, w:ins dropped."""
+    p = Document(docx_path).paragraphs[para_index]._p
+    out = []
+    for child in p:
+        tag = child.tag.split("}")[-1]
+        if tag == "r":
+            out.append("".join(t.text or "" for t in child.iter(qn("w:t"))))
+        elif tag == "del":
+            out.append("".join(t.text or "" for t in child.iter(qn("w:delText"))))
+    return "".join(out)
 
 def _make_input(tmp_path):
     p = tmp_path / "in.docx"
@@ -81,6 +109,32 @@ def test_replace_preserves_surrounding_text(tmp_path):
     assert "第8条 竞业限制" in xml and "业务。" in xml
     # and the tracked change still applied:
     assert "w:ins" in xml and "w:del" in xml and "一年" in xml
+
+def test_two_replaces_same_paragraph_preserve_order(tmp_path):
+    # Two independent replaces whose anchors land in the SAME paragraph.
+    # Regression: the first change's w:ins/w:del must stay in place; it must
+    # not migrate to the paragraph start when the second change rebuilds it.
+    p = tmp_path / "in.docx"
+    d = Document(); d.add_paragraph("A one B two C"); d.save(str(p))
+    plan = tmp_path / "plan.json"
+    plan.write_text(json.dumps([
+        {"clause": "1", "action": "replace", "anchor_text": "one",
+         "clean_version": "ONE", "reason": "r1", "legal_basis": "[待查]",
+         "risk_level": "中", "verify_status": "pending"},
+        {"clause": "2", "action": "replace", "anchor_text": "two",
+         "clean_version": "TWO", "reason": "r2", "legal_basis": "[待查]",
+         "risk_level": "中", "verify_status": "pending"},
+    ], ensure_ascii=False), encoding="utf-8")
+    out = tmp_path / "out.docx"
+    res = redline_docx.apply_redline(str(p), str(plan), str(out))
+    assert res["changes"] == 4  # 2 del + 2 ins
+    # Both changes anchor their own comment (none skipped for lost anchor).
+    assert res["comments"] == 2 and res["skipped_comment"] == 0
+    # Accept-all view keeps both replacements in their original positions.
+    assert _accepted_text(str(out)) == "A ONE B TWO C"
+    # Reject-all view reconstructs the untouched original.
+    assert _rejected_text(str(out)) == "A one B two C"
+
 
 def test_degrade_to_markdown(tmp_path, monkeypatch):
     monkeypatch.setattr(redline_docx, "DOCX_AVAILABLE", False)

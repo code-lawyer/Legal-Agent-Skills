@@ -1,5 +1,8 @@
 # 合同审查 Skill（中美双法域）Implementation Plan
 
+> 📌 **历史实施计划（已归档）。** 功能大多已实现；文中的 `- [ ]` 勾选项不再同步更新，
+> 不作为进度依据。真实进度与后续路线见根目录 [`ROADMAP.md`](../../../ROADMAP.md)。
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** 构建一个 Claude Code 合同审查技能，覆盖中国法+美国法双法域，三层解耦（法域中立方法骨架 + 可插拔法域规则包 + 法域路由层），严格遵循渐进式披露。

@@ -1,0 +1,35 @@
+name: CI
+
+# 每次 push / PR 都跑：结构校验（validate.py）+ 单元测试（pytest）。
+# 与 release-skill.yml 分工：release 只在打 tag 时打包发布；本工作流负责
+# 合并前的质量门禁——结构校验必过、且两个 skill 的测试全绿才允许合并。
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 安装 Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: 安装测试依赖
+        run: python -m pip install --upgrade pip && pip install -r requirements-dev.txt
+
+      - name: 结构校验 contract-review
+        run: python contract-review/validate.py
+
+      - name: 结构校验 legal-research
+        run: python legal-research/validate.py
+
+      - name: 单元测试（pytest）
+        run: python -m pytest contract-review/scripts/test_redline_docx.py legal-research/tests/ -q

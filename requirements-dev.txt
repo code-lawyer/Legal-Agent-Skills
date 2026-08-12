@@ -1,0 +1,4 @@
+# 开发/测试依赖（运行 pytest 用）。运行期 skill 本身只需 python-docx（见
+# contract-review/scripts/requirements.txt）；本文件供本地开发与 CI 安装测试栈。
+python-docx>=1.2.0
+pytest>=7

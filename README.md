@@ -132,6 +132,5 @@ Legal-Agent-Skills/
 │   ├── SKILL.md
 │   ├── references/           #   路由/检索核验/骨架/护栏/报告模板/终检门/MCP 接入
 │   └── validate.py
-├── docs/superpowers/         # 设计规格与实现计划（specs / plans）
 └── .github/workflows/        # 打 tag 自动校验 + 打包 + 发 Release
 ```

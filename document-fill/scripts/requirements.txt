@@ -1,0 +1,2 @@
+# document-fill 运行期依赖（仅渲染器需要；fill_lint / validate 纯标准库）
+python-docx>=1.2.0

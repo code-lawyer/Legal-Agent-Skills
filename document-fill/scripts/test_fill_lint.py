@@ -1,4 +1,4 @@
-import json, os
+import json, os, subprocess, sys
 import fill_lint
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -39,3 +39,20 @@ def test_ambiguous_needs_two_candidates():
 def test_ledger_counts_by_status():
     _, ledger = fill_lint.lint_plan(_load("sample_fill_plan.json"))
     assert ledger["extracted"] == 1 and ledger["gap"] == 1 and ledger["pending_drafting"] == 1
+
+def test_extracted_value_must_appear_verbatim_in_quote():
+    bad = {"slot_id": "m", "slot_label": "M", "slot_type": "fact",
+           "template_context": "{{m}}", "status": "extracted", "value": "李四欠款50万元",
+           "source_span": {"source_id": "_md/借条.md", "quote": "李四借款", "locator": "p1"}}
+    assert any("Mode-2" in e for e in fill_lint.lint_item(bad, 0))
+
+def test_extracted_verbatim_with_whitespace_noise_passes():
+    ok = {"slot_id": "m", "slot_label": "M", "slot_type": "fact",
+          "template_context": "{{m}}", "status": "extracted", "value": "张 三",
+          "source_span": {"source_id": "a", "quote": "原告张三 到庭", "locator": "p1"}}
+    assert fill_lint.lint_item(ok, 0) == []
+
+def test_cli_exit_codes():
+    base = ["python", os.path.join(HERE, "fill_lint.py")]
+    assert subprocess.run(base + [os.path.join(HERE, "sample_fill_plan.json")]).returncode == 0
+    assert subprocess.run(base + [os.path.join(HERE, "sample_fill_plan.invalid.json")]).returncode == 1

@@ -29,6 +29,8 @@ def lint_item(item, idx):
             errors.append(f"[{sid}] extracted 缺 value")
         if not (span.get("source_id") and span.get("quote") and span.get("locator")):
             errors.append(f"[{sid}] extracted 的 source_span 必须含 source_id/quote/locator")
+        elif _norm(item["value"]) not in _norm(span["quote"]):
+            errors.append(f"[{sid}] Mode-2 校验失败：value「{item['value']}」未在 source_span.quote 逐字命中")
     elif st == "inferred":
         if not item.get("formula"):
             errors.append(f"[{sid}] inferred 缺 formula")
@@ -59,3 +61,25 @@ def lint_plan(plan):
         if st in ledger:
             ledger[st] += 1
     return (errors, ledger)
+
+def main(argv):
+    if len(argv) != 2:
+        print("用法: python fill_lint.py <fill_plan.json>")
+        return 2
+    with open(argv[1], encoding="utf-8") as f:
+        plan = json.load(f)
+    errors, ledger = lint_plan(plan)
+    print("=== 覆盖率账本 ===")
+    for k in ["extracted", "inferred", "user_confirmed", "ambiguous", "gap", "pending_drafting"]:
+        print(f"  {k}: {ledger[k]}")
+    if errors:
+        print(f"\n=== {len(errors)} 个硬错误 ===")
+        for e in errors:
+            print("❌ ", e)
+        return 1
+    print("\n✅ 通过：所有取证项锚定完整、Mode-2 逐字命中")
+    return 0
+
+if __name__ == "__main__":
+    sys.stdout.reconfigure(encoding="utf-8")
+    sys.exit(main(sys.argv))

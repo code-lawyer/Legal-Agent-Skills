@@ -9,15 +9,15 @@ SKILL_BUDGET = 100
 REF_BUDGET = 260
 REF_RE = re.compile(r"references/(\d{2}-[a-z-]+)\.md")
 
-def _body_lines(path):
-    with open(path, encoding="utf-8") as f:
-        lines = f.read().splitlines()
+def _body_line_count(text):
+    """去掉 YAML frontmatter 后的正文行数。只把整行 --- 当分隔符。"""
+    lines = text.splitlines()
     if lines and lines[0].strip() == "---":
         try:
             lines = lines[lines.index("---", 1) + 1:]
         except ValueError:
             pass
-    return lines
+    return len(lines)
 
 def validate_skill(root):
     errors = []
@@ -32,7 +32,7 @@ def validate_skill(root):
             skill_text = f.read()
         if not skill_text.startswith("---"):
             errors.append("SKILL.md 缺 YAML frontmatter")
-        n = len(_body_lines(skill))
+        n = _body_line_count(skill_text)
         if n > SKILL_BUDGET:
             errors.append(f"SKILL.md 正文 {n} 行 > {SKILL_BUDGET}（违反渐进式披露）")
         for a in SKILL_ANCHORS:
@@ -43,23 +43,21 @@ def validate_skill(root):
         errors.append("缺 README.md")
 
     existing = set()
+    texts = [skill_text]
     if os.path.isdir(refs_dir):
         for fn in sorted(os.listdir(refs_dir)):
             if fn.endswith(".md"):
                 existing.add(fn[:-3])
-                n = len(_body_lines(os.path.join(refs_dir, fn)))
+                with open(os.path.join(refs_dir, fn), encoding="utf-8") as f:
+                    text = f.read()
+                texts.append(text)
+                n = _body_line_count(text)
                 if n > REF_BUDGET:
                     errors.append(f"references/{fn} {n} 行 > {REF_BUDGET}")
     for name in REQUIRED_REFS:
         if name not in existing:
             errors.append(f"缺 references/{name}.md")
 
-    texts = [skill_text]
-    if os.path.isdir(refs_dir):
-        for fn in os.listdir(refs_dir):
-            if fn.endswith(".md"):
-                with open(os.path.join(refs_dir, fn), encoding="utf-8") as f:
-                    texts.append(f.read())
     for t in texts:
         for ref in REF_RE.findall(t):
             if ref not in existing:

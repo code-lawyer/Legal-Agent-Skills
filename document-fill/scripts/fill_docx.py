@@ -51,6 +51,11 @@ def _replace_in_paragraph(para, token, value):
     else:
         para.add_run(new_text)
 
+def _fill_paragraphs(paragraphs, idx):
+    for para in paragraphs:
+        for sid, it in idx.items():
+            _replace_in_paragraph(para, "{{" + sid + "}}", render_value(it))
+
 def fill_docx(template_path, plan, out_path):
     tpl = Path(template_path)
     if not DOCX_AVAILABLE or tpl.suffix.lower() != ".docx":
@@ -62,19 +67,12 @@ def fill_docx(template_path, plan, out_path):
         md_out.write_text(md, encoding="utf-8")
         return {"degraded": True, "output": str(md_out)}
     doc = Document(str(tpl))
-    for para in doc.paragraphs:
-        for sid, it in _index(plan).items():
-            token = "{{" + sid + "}}"
-            if token in para.text:
-                _replace_in_paragraph(para, token, render_value(it))
+    idx = _index(plan)
+    _fill_paragraphs(doc.paragraphs, idx)
     for table in doc.tables:
         for row in table.rows:
             for cell in row.cells:
-                for para in cell.paragraphs:
-                    for sid, it in _index(plan).items():
-                        token = "{{" + sid + "}}"
-                        if token in para.text:
-                            _replace_in_paragraph(para, token, render_value(it))
+                _fill_paragraphs(cell.paragraphs, idx)
     doc.save(out_path)
     return {"degraded": False, "output": str(out_path)}
 

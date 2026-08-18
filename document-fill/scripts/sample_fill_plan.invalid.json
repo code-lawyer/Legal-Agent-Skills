@@ -1,0 +1,11 @@
+[
+  {"slot_id": "bad_extracted", "slot_label": "被拔高值", "slot_type": "fact",
+   "template_context": "{{bad_extracted}}", "status": "extracted", "value": "李四欠款50万元",
+   "source_span": {"source_id": "_md/借条.md", "quote": "李四借款", "locator": "p1"}},
+  {"slot_id": "bad_argument", "slot_label": "论证被填", "slot_type": "argument",
+   "template_context": "{{bad_argument}}", "status": "extracted", "value": "综上应予支持",
+   "source_span": {"source_id": "_md/x.md", "quote": "综上应予支持", "locator": "p9"}},
+  {"slot_id": "bad_ambiguous", "slot_label": "并列不足", "slot_type": "fact",
+   "template_context": "{{bad_ambiguous}}", "status": "ambiguous", "value": null,
+   "candidates": [{"value": "甲", "source_span": {"source_id": "a", "quote": "甲", "locator": "p1"}}]}
+]

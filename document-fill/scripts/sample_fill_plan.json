@@ -1,0 +1,20 @@
+[
+  {"slot_id": "plaintiff_name", "slot_label": "原告姓名", "slot_type": "fact",
+   "template_context": "原告：{{plaintiff_name}}，男", "status": "extracted", "value": "张三",
+   "source_span": {"source_id": "_md/民事判决书.md", "quote": "原告张三，男，1980年生", "locator": "p1¶2"}},
+  {"slot_id": "claim_amount", "slot_label": "诉请金额", "slot_type": "legal_claim",
+   "template_context": "请求判令被告支付{{claim_amount}}元", "status": "inferred", "value": "110000",
+   "formula": "本金100000 + 利息10000", "inferred_from": ["_md/借款合同.md#p2", "_md/银行流水.md#p5"]},
+  {"slot_id": "signing_date", "slot_label": "签约日期", "slot_type": "fact",
+   "template_context": "于{{signing_date}}签订", "status": "user_confirmed", "value": "2023年3月1日",
+   "confirmed_at": "2026-08-17T10:00:00", "confirmation_note": "用户口头确认，卷内无书面"},
+  {"slot_id": "breach_date", "slot_label": "违约日期", "slot_type": "fact",
+   "template_context": "被告自{{breach_date}}起未还款", "status": "ambiguous", "value": null,
+   "candidates": [
+     {"value": "2023年6月", "source_span": {"source_id": "_md/催款函.md", "quote": "自2023年6月起", "locator": "p1"}},
+     {"value": "2023年7月", "source_span": {"source_id": "_md/被告答辩.md", "quote": "实际2023年7月才逾期", "locator": "p2"}}]},
+  {"slot_id": "guarantor", "slot_label": "担保人", "slot_type": "fact",
+   "template_context": "担保人：{{guarantor}}", "status": "gap", "value": null},
+  {"slot_id": "legal_argument", "slot_label": "事实与理由", "slot_type": "argument",
+   "template_context": "事实与理由：{{legal_argument}}", "status": "pending_drafting", "value": null}
+]

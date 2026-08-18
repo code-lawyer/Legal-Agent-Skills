@@ -31,5 +31,13 @@ jobs:
       - name: 结构校验 legal-research
         run: python legal-research/validate.py
 
+      - name: 结构校验 document-fill
+        run: python document-fill/validate.py
+
       - name: 单元测试（pytest）
         run: python -m pytest contract-review/scripts/test_redline_docx.py legal-research/tests/ -q
+
+      - name: 单元测试 document-fill（pytest）
+        # 与上一步分开跑：两个 skill 的 tests/ 下都有同名 test_validate.py，
+        # 且均无 __init__.py，合并进同一 pytest 会话会因 rootdir 导入模式重名冲突而报错。
+        run: python -m pytest document-fill/scripts/ document-fill/tests/ -q

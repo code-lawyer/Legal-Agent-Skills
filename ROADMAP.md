@@ -7,6 +7,7 @@
 
 - contract-review：中美双法域审查、可插拔规则包、双轴风险清单、真实 Word 红线稿。
 - legal-research：研究/检索/复合三路径、MCP 硬前置、来源标签三轴、QC1–QC7 终检门。
+- document-fill：模板 × 本案知识库 锚定填充，Mode-2 闸门。
 - 工程：`validate.py` 结构校验、打 tag 自动打包发布。
 - 评审后加固：
   - [x] 修复同段落多修订红线缺陷（+ 回归测试）。

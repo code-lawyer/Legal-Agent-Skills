@@ -16,6 +16,7 @@
 |---|---|---|
 | **[`contract-review/`](contract-review/)** | 双轴风险问题清单 + 可选 Word 红线稿 | 审查/审阅/markup 合同、检查条款、看 NDA/MSA/SaaS/买卖等协议 |
 | **[`legal-research/`](legal-research/)** | 法律研究报告 / 类案检索报告 | 论证某法律问题、查争议点法律依据、检索类案、归纳裁判规则/裁判倾向 |
+| **[`document-fill/`](document-fill/)** | 填好的文书 + 溯源/缺口报告 | 按案卷/知识库填一份模板/表单/文书（起诉状、答辩状、合同模板等占位符文本） |
 
 两个 skill 边界互斥、彼此路由：合同相关 → `contract-review`；法律问题论证或类案检索 → `legal-research`。均**不做**合同起草、企业核验、尽调合规、续约提醒、流程图。
 

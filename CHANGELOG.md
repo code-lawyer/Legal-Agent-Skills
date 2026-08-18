@@ -1,9 +1,17 @@
 # Changelog
 
 本项目遵循 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/) 格式；
-两个 skill（`contract-review`、`legal-research`）共用本变更日志，条目注明所属。
+三个 skill（`contract-review`、`legal-research`、`document-fill`）共用本变更日志，条目注明所属。
 
 ## [Unreleased]
+
+### Added
+- **document-fill**：新增文书模板填充 skill——给一份文书模板 + 本案知识库，按模板取证
+  填充、产出干净文书 + 溯源/缺口报告。状态标签（`extracted`/`inferred`/`user_confirmed`/
+  `ambiguous`/`gap`/`pending_drafting`）+ Mode-2 逐字命中强约束；`scripts/fill_lint.py`
+  为填充计划确定性闸门（机检来源锚定完整性、状态合法性、slot_id 唯一性），
+  `scripts/fill_docx.py` 就地渲染 docx 占位符（含表格单元格）、无 `python-docx` 时降级为
+  markdown 并显式返回 `degraded=True`。已接入路由层与 CI。
 
 ### Fixed
 - **contract-review / 红线脚本**：修复同一段落连续应用多个修订时，先前的

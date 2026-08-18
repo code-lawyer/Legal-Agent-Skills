@@ -22,7 +22,8 @@ def render_value(item):
     if st == "ambiguous":
         vals = " / ".join(str(c.get("value", "")) for c in (item.get("candidates") or []))
         return f"【存疑·并列待裁：{vals}】"
-    return str(item.get("value", ""))
+    value = item.get("value")
+    return str(value) if value is not None else ""
 
 def _index(plan):
     return {it.get("slot_id"): it for it in plan}
@@ -66,6 +67,14 @@ def fill_docx(template_path, plan, out_path):
             token = "{{" + sid + "}}"
             if token in para.text:
                 _replace_in_paragraph(para, token, render_value(it))
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for para in cell.paragraphs:
+                    for sid, it in _index(plan).items():
+                        token = "{{" + sid + "}}"
+                        if token in para.text:
+                            _replace_in_paragraph(para, token, render_value(it))
     doc.save(out_path)
     return {"degraded": False, "output": str(out_path)}
 

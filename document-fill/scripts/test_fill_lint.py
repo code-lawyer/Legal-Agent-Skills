@@ -52,6 +52,58 @@ def test_extracted_verbatim_with_whitespace_noise_passes():
           "source_span": {"source_id": "a", "quote": "原告张三 到庭", "locator": "p1"}}
     assert fill_lint.lint_item(ok, 0) == []
 
+def test_extracted_missing_value_key_does_not_crash():
+    bad = dict(VALID); bad.pop("value")
+    errs = fill_lint.lint_item(bad, 0)
+    assert any("缺 value" in e for e in errs)
+
+def test_inferred_missing_value_fails():
+    bad = {"slot_id": "i", "slot_label": "I", "slot_type": "fact",
+           "template_context": "{{i}}", "status": "inferred", "value": "",
+           "formula": "a+b", "inferred_from": ["x"]}
+    errs = fill_lint.lint_item(bad, 0)
+    assert any("缺 value" in e for e in errs)
+
+def test_user_confirmed_missing_value_fails():
+    bad = {"slot_id": "u", "slot_label": "U", "slot_type": "fact",
+           "template_context": "{{u}}", "status": "user_confirmed", "value": "",
+           "confirmed_at": "2026-08-17T10:00:00", "confirmation_note": "口头确认"}
+    errs = fill_lint.lint_item(bad, 0)
+    assert any("缺 value" in e for e in errs)
+
+def test_user_confirmed_missing_confirmation_note_fails():
+    bad = {"slot_id": "u", "slot_label": "U", "slot_type": "fact",
+           "template_context": "{{u}}", "status": "user_confirmed", "value": "2023年3月1日",
+           "confirmed_at": "2026-08-17T10:00:00"}
+    errs = fill_lint.lint_item(bad, 0)
+    assert any("confirmation_note" in e for e in errs)
+
+def test_pending_drafting_on_fact_fails():
+    bad = {"slot_id": "f", "slot_label": "F", "slot_type": "fact",
+           "template_context": "{{f}}", "status": "pending_drafting", "value": None}
+    errs = fill_lint.lint_item(bad, 0)
+    assert any("pending_drafting" in e for e in errs)
+
+def test_pending_drafting_on_legal_claim_fails():
+    bad = {"slot_id": "lc", "slot_label": "LC", "slot_type": "legal_claim",
+           "template_context": "{{lc}}", "status": "pending_drafting", "value": None}
+    errs = fill_lint.lint_item(bad, 0)
+    assert any("pending_drafting" in e for e in errs)
+
+def test_ambiguous_with_nonnull_value_fails():
+    bad = {"slot_id": "b", "slot_label": "B", "slot_type": "fact",
+           "template_context": "{{b}}", "status": "ambiguous", "value": "甲",
+           "candidates": [
+               {"value": "甲", "source_span": {"source_id": "a", "quote": "甲", "locator": "p1"}},
+               {"value": "乙", "source_span": {"source_id": "b", "quote": "乙", "locator": "p2"}}]}
+    errs = fill_lint.lint_item(bad, 0)
+    assert any("value" in e and "ambiguous" in e for e in errs)
+
+def test_duplicate_slot_id_fails():
+    plan = [dict(VALID), dict(VALID)]
+    errors, _ = fill_lint.lint_plan(plan)
+    assert any("slot_id" in e and "重复" in e for e in errors) or any(VALID["slot_id"] in e for e in errors)
+
 def test_cli_exit_codes():
     base = ["python", os.path.join(HERE, "fill_lint.py")]
     assert subprocess.run(base + [os.path.join(HERE, "sample_fill_plan.json")]).returncode == 0

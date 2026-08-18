@@ -33,3 +33,24 @@ def test_docx_template_fills(tmp_path):
     assert res["degraded"] is False
     filled = docx.Document(res["output"])
     assert "张三" in filled.paragraphs[0].text and "{{" not in filled.paragraphs[0].text
+
+def test_render_value_none_does_not_render_literal_none():
+    item = {"slot_id": "x", "slot_label": "X", "slot_type": "fact",
+            "status": "extracted", "value": None}
+    out = fill_docx.render_value(item)
+    assert out == ""
+    assert out != "None"
+
+def test_docx_table_cell_fills(tmp_path):
+    docx = pytest.importorskip("docx")
+    tpl = tmp_path / "t_table.docx"
+    d = docx.Document()
+    table = d.add_table(rows=1, cols=1)
+    table.rows[0].cells[0].paragraphs[0].add_run("{{plaintiff_name}}")
+    d.save(str(tpl))
+    res = fill_docx.fill_docx(str(tpl), _plan(), str(tmp_path / "out_table.docx"))
+    assert res["degraded"] is False
+    filled = docx.Document(res["output"])
+    cell_text = filled.tables[0].rows[0].cells[0].text
+    assert cell_text == "张三"
+    assert "{{" not in cell_text

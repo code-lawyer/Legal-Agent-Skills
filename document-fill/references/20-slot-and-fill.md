@@ -13,7 +13,7 @@
   - `argument`：论证性文字（如"事实与理由""答辩意见"整段说理）——这类项**不填空**，见下方
     「论证型一律 pending_drafting」。
 
-## 五态标签表（与 `references/_templates/fill-plan-contract.md` 完全一致）
+## 状态标签表（与 `references/_templates/fill-plan-contract.md` 完全一致）
 
 每个待填项填入值后，**挂且仅挂一个状态标签**，不得混用、不得省略：
 

@@ -1,4 +1,4 @@
-import os, sys, importlib.util
+import os, importlib.util
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 spec = importlib.util.spec_from_file_location("df_validate", os.path.join(ROOT, "validate.py"))

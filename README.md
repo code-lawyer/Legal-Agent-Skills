@@ -81,11 +81,13 @@ pip install -r requirements-dev.txt
 
 # 校验 skill 结构完整性（每次修改 references/ 或 rules/ 后运行）
 python contract-review/validate.py         # 预期：✅ 通过
-cd legal-research && python validate.py     # 预期：✅ 通过
+python legal-research/validate.py          # 预期：✅ 通过
+python document-fill/validate.py           # 预期：✅ 通过
 
-# 单元测试
+# 单元测试（在仓库根目录直接聚合运行；也可指定单个 skill 的路径）
+python -m pytest -q                                             # 三个 skill 全量
 python -m pytest contract-review/scripts/test_redline_docx.py   # 红线渲染 + 计划校验
-python -m pytest legal-research/tests/                          # 纯标准库
+python -m pytest document-fill/scripts/ document-fill/tests/    # 填充闸门/渲染/校验
 ```
 
 进度看板见 [`ROADMAP.md`](ROADMAP.md)；变更见 [`CHANGELOG.md`](CHANGELOG.md)；
@@ -132,6 +134,11 @@ Legal-Agent-Skills/
 ├── legal-research/           # 法律研究与类案检索 skill
 │   ├── SKILL.md
 │   ├── references/           #   路由/检索核验/骨架/护栏/报告模板/终检门/MCP 接入
+│   └── validate.py
+├── document-fill/            # 按本案知识库给文书模板取证填充 skill
+│   ├── SKILL.md
+│   ├── references/           #   主流程/知识库接入/取证填充/交付与报告
+│   ├── scripts/              #   fill_lint.py（填充计划闸门）+ fill_docx.py（就地渲染）
 │   └── validate.py
 └── .github/workflows/        # 打 tag 自动校验 + 打包 + 发 Release
 ```

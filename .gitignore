@@ -14,3 +14,6 @@ others/
 .git/sdd/
 __pycache__/
 *.pyc
+
+# SDD 过程产物（plans/specs 为一次性实施计划，完成后不入库，进度以 ROADMAP.md 为准）
+docs/superpowers/
